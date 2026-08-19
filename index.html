@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>CINEÁRIO — Biblioteca com Avaliações e Progresso</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --accent:   #ff3b30;
+      --accent2:  #ff9500;
+      --green:    #30d158;
+      --blue:     #4cc9f0;
+      --surface:  rgba(20, 20, 27, 0.88);
+      --surface2: #1c1c24;
+      --border:   rgba(255, 255, 255, 0.10);
+      --muted:    #8e8e93;
+      --love:     #ff2d55;
+      --meh:      #ffb347;
+    }
+
+    body {
+      background: #000;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+      padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+      min-height: 100dvh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background: radial-gradient(circle at 25% 15%, #12121e 0%, #000 80%);
+      pointer-events: none; z-index: -1;
+    }
+
+    /* ===== HEADER ===== */
+    .ios-header {
+      padding: 0.75rem 1.1rem 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(28px);
+      border-bottom: 0.5px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+    }
+    .logo .white { color: #fff; }
+    .logo .orange {
+      background: linear-gradient(135deg, #ff3b30, #ff9500);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .tab-bar-ios {
+      display: flex; gap: 0.15rem;
+      background: rgba(28, 28, 35, 0.8);
+      backdrop-filter: blur(30px);
+      padding: 0.25rem;
+      border-radius: 100px;
+      border: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab {
+      padding: 0.38rem 0.9rem;
+      font-size: 0.75rem; font-weight: 600;
+      background: transparent; border: none;
+      border-radius: 40px; color: var(--muted);
+      cursor: pointer; transition: 0.2s;
+      font-family: inherit; white-space: nowrap;
+    }
+    .tab.active { background: #fff; color: #000; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+
+    /* ===== MAIN ===== */
+    main { 
+      padding: 1rem 0.9rem; 
+      max-width: 1400px; 
+      margin: 0 auto; 
+      width: 100%;
+    }
+
+    .view { display: none; animation: fadeUp 0.25s ease; }
+    .view.active { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== SEÇÕES (categorias tipo streaming) ===== */
+    .section-label {
+      font-size: 0.95rem; font-weight: 800; letter-spacing: -0.2px;
+      margin: 0.2rem 0 0.6rem;
+    }
+
+    /* ===== STREAK / CONTINUE ASSISTINDO ===== */
+    .streak-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: linear-gradient(135deg, rgba(255,149,0,0.16), rgba(255,59,48,0.10));
+      border: 0.5px solid rgba(255,149,0,0.35);
+      border-radius: 22px;
+      padding: 0.55rem 0.9rem;
+      margin-bottom: 0.7rem;
+      font-size: 0.75rem; font-weight: 600;
+      animation: fadeUp 0.3s ease;
+    }
+    .streak-fire { font-size: 1rem; }
+    .streak-num { color: var(--accent2); font-weight: 800; }
+
+    .continue-card {
+      display: flex; align-items: center; gap: 0.7rem;
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 0.7rem 0.8rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: 0.15s;
+      animation: fadeUp 0.3s ease;
+    }
+    .continue-card:active { transform: scale(0.98); background: rgba(30,30,40,0.92); }
+    .continue-label {
+      font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 2px;
+    }
+    .continue-title { font-size: 0.85rem; font-weight: 700; }
+    .continue-sub { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+    .continue-cover {
+      width: 44px; height: 62px; border-radius: 10px; object-fit: cover; flex-shrink: 0;
+      border: 0.5px solid rgba(255,255,255,0.12);
+    }
+    .continue-cover-placeholder {
+      width: 44px; height: 62px; border-radius: 10px; flex-shrink: 0;
+      background: #2c2c38; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .continue-arrow { margin-left: auto; color: var(--muted); font-size: 1.1rem; }
+
+    /* ===== FAB ===== */
+    .fab-add {
+      position: fixed;
+      right: 1.1rem;
+      bottom: calc(1.3rem + env(safe-area-inset-bottom, 0px));
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff3b30, #ff9500);
+      border: none;
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 20px rgba(255, 59, 48, 0.45);
+      cursor: pointer;
+      z-index: 90;
+      transition: transform 0.15s, opacity 0.2s;
+    }
+    .fab-add:active { transform: scale(0.9); }
+    .fab-add.hidden { display: none !important; }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
+      border-radius: 40px;
+      padding: 0.35rem 0.7rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      padding: 0.35rem 0.9rem;
+      border-radius: 40px;
+      background: rgba(255, 255, 255, 0.07);
+      border: none; color: #c6c6c8;
+      font-weight: 600; font-size: 0.72rem;
+      cursor: pointer; transition: 0.15s;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .filter-chip.active { background: #fff; color: #000; }
+    .search-ios {
+      flex: 1; min-width: 80px;
+      background: rgba(255, 255, 255, 0.09);
+      border-radius: 30px; padding: 0.28rem 0.7rem;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .search-ios input {
+      background: transparent; border: none;
+      padding: 0.38rem 0.1rem; color: white;
+      width: 100%; font-size: 0.82rem;
+      outline: none; font-family: inherit;
+    }
+    .search-ios input::placeholder { color: var(--muted); }
+
+    /* ===== SORT BAR ===== */
+    .sort-bar {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 30px;
+      padding: 0.3rem 0.6rem;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .sort-bar::-webkit-scrollbar { display: none; }
+    .sort-chip {
+      padding: 0.3rem 0.8rem;
+      border-radius: 40px;
+      background: rgba(255, 255, 255, 0.07);
+      border: none; color: #c6c6c8;
+      font-weight: 600; font-size: 0.68rem;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .sort-chip.active { background: #fff; color: #000; }
+
+    /* ===== HERO (destaque estilo streaming) ===== */
+    .hero {
+      position: relative;
+      border-radius: 22px;
+      overflow: hidden;
+      margin-bottom: 1.1rem;
+      min-height: 230px;
+      display: flex;
+      align-items: flex-end;
+      background: #15151d;
+      cursor: pointer;
+      animation: fadeUp 0.3s ease;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.75);
+    }
+    .hero-bg-placeholder {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, #241823, #14141c);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; opacity: 0.35;
+    }
+    .hero::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 25%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.95) 100%);
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      padding: 1.1rem 1.1rem 1.2rem;
+      width: 100%;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.66rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--accent2);
+      margin-bottom: 0.4rem;
+    }
+    .hero-title {
+      font-size: 1.35rem; font-weight: 800; letter-spacing: -0.4px;
+      line-height: 1.15; margin-bottom: 0.3rem;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .hero-sub {
+      font-size: 0.78rem; color: #d8d8dc; margin-bottom: 0.8rem;
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    }
+    .hero-badge {
+      background: rgba(255,255,255,0.12);
+      padding: 0.15rem 0.55rem; border-radius: 20px;
+      font-weight: 700; font-size: 0.64rem;
+    }
+    .hero-actions { display: flex; gap: 0.55rem; }
+    .hero-btn {
+      display: flex; align-items: center; gap: 6px;
+      border: none; border-radius: 30px;
+      padding: 0.55rem 1.1rem;
+      font-weight: 700; font-size: 0.78rem;
+      cursor: pointer; transition: 0.15s;
+      font-family: inherit;
+    }
+    .hero-btn-primary { background: #fff; color: #000; }
+    .hero-btn-primary:active { transform: scale(0.96); opacity: 0.85; }
+    .hero-btn-secondary { background: rgba(120,120,130,0.35); color: #fff; backdrop-filter: blur(10px); }
+    .hero-btn-secondary:active { transform: scale(0.96); opacity: 0.85; }
+
+    /* ===== PRATELEIRAS (fileiras horizontais) ===== */
+    .shelf { margin-bottom: 1.4rem; }
+    .shelf-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 0.55rem; padding: 0 0.1rem;
+    }
+    .shelf-title { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.2px; }
+    .shelf-count { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+    .shelf-row {
+      display: flex; gap: 0.65rem;
+      overflow-x: auto; scroll-snap-type: x proximity;
+      padding: 0.1rem 0.1rem 0.4rem;
+      scrollbar-width: none;
+      margin: 0 -0.1rem;
+    }
+    .shelf-row::-webkit-scrollbar { display: none; }
+
+    /* ===== GRID (usado no modo lista/busca) ===== */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.65rem;
+    }
+    @media (min-width: 600px) { .cards-grid { grid-template-columns: repeat(4, 1fr); gap: 0.8rem; } main { padding: 1rem 1.2rem; } }
+    @media (min-width: 900px) { .cards-grid { grid-template-columns: repeat(6, 1fr); gap: 1rem; } }
+    @media (min-width: 1200px) { .cards-grid { grid-template-columns: repeat(8, 1fr); gap: 1rem; } }
+
+    /* ===== POSTER CARD (estilo streaming) ===== */
+    .poster-card {
+      flex-shrink: 0;
+      width: 116px;
+      scroll-snap-align: start;
+      cursor: pointer;
+    }
+    .cards-grid .poster-card { width: 100%; }
+    .poster-wrap {
+      position: relative;
+      width: 100%; aspect-ratio: 2 / 3;
+      border-radius: 12px; overflow: hidden;
+      background: #1c1c24;
+      border: 0.5px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+      transition: transform 0.15s;
+    }
+    .poster-card:active .poster-wrap { transform: scale(0.95); }
+    .poster-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .poster-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+    }
+    .poster-placeholder.serie { background: linear-gradient(160deg, rgba(76,201,240,0.28), #17171f); }
+    .poster-placeholder.filme { background: linear-gradient(160deg, rgba(255,59,48,0.28), #17171f); }
+
+    .poster-type-tag {
+      position: absolute; top: 6px; left: 6px;
+      font-size: 0.6rem; padding: 0.1rem 0.4rem;
+      border-radius: 20px; font-weight: 800;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+    }
+    .poster-type-tag.serie { color: var(--blue); }
+    .poster-type-tag.filme { color: var(--accent); }
+    .poster-rating-tag {
+      position: absolute; top: 6px; right: 6px;
+      font-size: 0.8rem;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
+    }
+    .poster-progress-overlay {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.9));
+      padding: 0.9rem 0.4rem 0.35rem;
+      font-size: 0.6rem; font-weight: 700; color: #fff;
+      text-align: center;
+    }
+    .poster-progress-bar {
+      height: 3px; border-radius: 3px;
+      background: rgba(255,255,255,0.2);
+      margin-top: 0.25rem; overflow: hidden;
+    }
+    .poster-progress-fill { height: 100%; background: var(--accent2); }
+
+    .poster-title {
+      margin-top: 0.4rem;
+      font-size: 0.72rem; font-weight: 600;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Ações rápidas (aparecem ao tocar/segurar em telas maiores; no mobile viram um menu simples) */
+    .poster-quickbar {
+      display: flex; gap: 0.3rem; margin-top: 0.35rem;
+    }
+    .poster-qbtn {
+      flex: 1;
+      border: none; border-radius: 20px;
+      background: rgba(255,255,255,0.08); color: #e5e5ea;
+      font-size: 0.6rem; font-weight: 700;
+      padding: 0.3rem 0; cursor: pointer;
+      font-family: inherit;
+    }
+    .poster-qbtn:active { opacity: 0.6; transform: scale(0.94); }
+    .poster-qbtn.finish { background: rgba(48,209,88,0.2); color: var(--green); }
+    .poster-qbtn.love { background: rgba(255,45,85,0.15); color: var(--love); }
+    .poster-qbtn.love.active-love { background: rgba(255,45,85,0.4); }
+    .poster-qbtn.meh { background: rgba(255,180,71,0.15); color: var(--meh); }
+    .poster-qbtn.meh.active-meh { background: rgba(255,180,71,0.4); }
+
+    /* ===== ABA ADICIONAR ===== */
+    .add-container {
+      background: rgba(28, 28, 35, 0.92);
+      backdrop-filter: blur(30px);
+      border-radius: 28px;
+      padding: 1.5rem 1.3rem;
+      border: 0.5px solid var(--border);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .add-container h2 { margin-bottom: 1.1rem; font-weight: 700; font-size: 1.1rem; }
+    .field-group { margin-bottom: 1rem; }
+    .field-group label {
+      font-size: 0.68rem; font-weight: 600;
+      text-transform: uppercase; color: var(--muted);
+      letter-spacing: 0.5px; display: block; margin-bottom: 0.3rem;
+    }
+    .field-group input, .field-group select {
+      width: 100%; padding: 0.8rem 0.9rem;
+      background: #1c1c24; border: 0.5px solid #3a3a44;
+      border-radius: 14px; color: white;
+      font-size: 0.9rem; font-family: inherit;
+      outline: none;
+    }
+    .field-group input:focus, .field-group select:focus { border-color: var(--accent); }
+    .field-group input.error { border-color: #ff453a; }
+    .btn-upload-img {
+      background: #2c2c34; border-radius: 14px; padding: 0.75rem;
+      text-align: center; font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; border: 0.5px solid #3a3a44;
+    }
+    .btn-upload-img:hover { background: #3a3a44; }
+    .preview-area { margin-top: 0.5rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .preview-thumb {
+      width: 52px; height: 74px; object-fit: cover;
+      border-radius: 10px; border: 1px solid var(--accent);
+    }
+    .btn-primary {
+      background: var(--accent); border: none;
+      border-radius: 28px; padding: 0.85rem;
+      font-weight: 700; font-size: 0.95rem;
+      color: white; width: 100%; margin-top: 0.3rem;
+      cursor: pointer; transition: 0.2s; font-family: inherit;
+    }
+    .btn-primary:hover { opacity: 0.85; transform: scale(0.99); }
+    .btn-primary:active { opacity: 0.8; transform: scale(0.98); }
+    .btn-primary.success { background: var(--green); }
+
+    /* ===== DIÁRIO ===== */
+    .stats-group {
+      display: flex; gap: 0.6rem;
+      background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(15px);
+      border-radius: 40px; padding: 0.6rem 1rem;
+      margin-bottom: 1rem; justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; flex: 1; min-width: 60px; }
+    .stat-number { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 0.58rem; color: var(--muted); margin-top: 2px; }
+
+    .diary-card {
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      border-radius: 22px; overflow: hidden;
+      border: 0.5px solid var(--border);
+    }
+    .diary-header {
+      display: grid;
+      grid-template-columns: 65px 1fr 55px 70px;
+      padding: 0.7rem 0.9rem;
+      background: rgba(0, 0, 0, 0.4);
+      font-size: 0.62rem; font-weight: 600;
+      color: var(--muted);
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+    }
+    .diary-row {
+      display: grid;
+      grid-template-columns: 65px 1fr 55px 70px;
+      align-items: center;
+      padding: 0.65rem 0.9rem;
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
+      gap: 0.4rem;
+    }
+    .diary-row:last-child { border-bottom: none; }
+    .diary-date { font-size: 0.65rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .diary-title-cell { font-weight: 600; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .diary-type-cell { font-size: 0.58rem; }
+    .diary-actions-cell { display: flex; gap: 4px; justify-content: flex-end; }
+    .undo-btn, .remove-diary-btn {
+      background: rgba(255, 255, 255, 0.08); border: none;
+      padding: 0.25rem 0.45rem; border-radius: 20px;
+      font-size: 0.58rem; font-weight: 600;
+      color: var(--accent2); cursor: pointer;
+    }
+    .undo-btn:hover, .remove-diary-btn:hover { opacity: 0.8; }
+    .remove-diary-btn { color: #ff453a; background: rgba(255, 69, 58, 0.1); }
+    .diary-rating {
+      font-size: 0.7rem;
+      text-align: center;
+    }
+
+    .empty-state {
+      text-align: center; padding: 2.5rem 1rem;
+      color: var(--muted); font-size: 0.85rem; line-height: 1.6;
+    }
+    .hidden { display: none !important; }
+
+    /* ===== BACKUP ===== */
+    .backup-container {
+      background: rgba(28, 28, 35, 0.92);
+      backdrop-filter: blur(30px);
+      border-radius: 28px;
+      padding: 1.5rem;
+      border: 0.5px solid var(--border);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .backup-container h2 { margin-bottom: 1rem; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .backup-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .backup-btn {
+      background: #2c2c34;
+      border: 0.5px solid #3a3a44;
+      border-radius: 18px;
+      padding: 0.9rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.2s;
+      color: white;
+    }
+    .backup-btn:hover { opacity: 0.85; transform: translateY(-2px); }
+    .backup-btn.export { background: rgba(48, 209, 88, 0.2); color: #30d158; border-color: rgba(48, 209, 88, 0.3); }
+    .backup-btn.import { background: rgba(76, 201, 240, 0.2); color: #4cc9f0; border-color: rgba(76, 201, 240, 0.3); }
+    .backup-btn.reset { background: rgba(255, 69, 58, 0.2); color: #ff453a; border-color: rgba(255, 69, 58, 0.3); }
+    .backup-btn:active { transform: scale(0.97); opacity: 0.8; }
+    .backup-info {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 16px;
+      padding: 0.8rem;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    #importFileInput { display: none; }
+    .warning-text { color: #ff453a; margin-top: 0.5rem; font-size: 0.65rem; }
+
+    /* ===== MODAL ===== */
+    .modal-mask {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(14px);
+      z-index: 200; display: flex; align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-mask.hidden { display: none !important; }
+    .modal-box {
+      background: var(--surface2);
+      border-radius: 28px 28px 0 0;
+      width: 100%; max-width: 500px;
+      padding: 1.4rem 1.3rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
+      border-top: 0.5px solid #3a3a44;
+      max-height: 92dvh; overflow-y: auto;
+    }
+    .modal-handle {
+      width: 38px; height: 4px;
+      background: rgba(255, 255, 255, 0.2); border-radius: 4px;
+      margin: 0 auto 1rem;
+    }
+    .modal-box h3 { margin-bottom: 1rem; font-weight: 700; font-size: 1rem; }
+    .modal-box .field-group input,
+    .modal-box .field-group select,
+    .modal-box .field-group textarea {
+      background: #2c2c38; border: 0.5px solid #44444e;
+      border-radius: 14px; color: white;
+      font-family: inherit; width: 100%; padding: 0.7rem 0.9rem;
+      font-size: 0.9rem; outline: none;
+    }
+    .modal-box .field-group textarea { resize: vertical; min-height: 60px; }
+    .modal-actions { display: flex; gap: 0.7rem; margin-top: 1.1rem; }
+    .btn-cancel {
+      flex: 1; padding: 0.7rem; border-radius: 40px;
+      background: #2c2c34; border: none; color: white;
+      font-weight: 600; cursor: pointer;
+    }
+    .btn-cancel:hover { background: #3a3a44; }
+    .btn-save-modal {
+      flex: 2; padding: 0.7rem; border-radius: 40px;
+      background: var(--accent); border: none; color: white;
+      font-weight: 700; cursor: pointer;
+    }
+    .btn-save-modal:hover { opacity: 0.85; }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed; bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+      left: 50%; transform: translateX(-50%) translateY(12px);
+      background: rgba(30, 30, 40, 0.95); border: 0.5px solid #444;
+      border-radius: 40px; padding: 0.6rem 1.4rem;
+      font-size: 0.8rem; font-weight: 500;
+      color: white; z-index: 300;
+      opacity: 0; transition: all 0.22s;
+      pointer-events: none; white-space: nowrap;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ===== ALERTA APOIO ===== */
+    .support-alert {
+      background: linear-gradient(135deg, rgba(255, 59, 48, 0.2), rgba(255, 149, 0, 0.2));
+      backdrop-filter: blur(24px);
+      border-radius: 28px;
+      margin-bottom: 1rem;
+      padding: 1rem 1rem;
+      border: 0.5px solid rgba(255, 149, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      animation: fadeUp 0.3s ease;
+    }
+    .support-text {
+      flex: 1;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .support-text strong {
+      background: linear-gradient(135deg, #ff9500, #ff3b30);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .support-btn {
+      background: #ff9500;
+      border: none;
+      border-radius: 40px;
+      padding: 0.55rem 1.2rem;
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: #000;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: inherit;
+      box-shadow: 0 2px 12px rgba(255, 149, 0, 0.3);
+    }
+    .support-btn:hover { opacity: 0.85; transform: scale(0.98); }
+    .support-btn:active { transform: scale(0.96); opacity: 0.9; }
+    .support-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 30px;
+      width: 28px;
+      height: 28px;
+      font-size: 1rem;
+      color: #aaa;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .support-close:hover { background: rgba(255, 255, 255, 0.2); }
+    .support-close:active { background: rgba(255, 255, 255, 0.25); }
+
+    @media (max-width: 380px) {
+      .logo { font-size: 1.4rem; }
+      .tab { padding: 0.34rem 0.7rem; font-size: 0.7rem; }
+      .card-cover, .cover-placeholder { width: 50px; height: 72px; }
+      .card-title { font-size: 0.78rem; }
+      .btn-action { font-size: 0.6rem; padding: 0.38rem 0; }
+      .support-text { font-size: 0.72rem; }
+      .stats-group { gap: 0.3rem; padding: 0.5rem 0.8rem; }
+      .stat-number { font-size: 1.2rem; }
+    }
+
+    /* ===== FOCUS VISIBLE PARA ACESSIBILIDADE ===== */
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="ios-header">
+  <div class="logo"><span class="white">CINE</span><span class="orange">ÁRIO</span></div>
+  <div class="tab-bar-ios" role="tablist">
+    <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true">Lib</button>
+    <button class="tab" data-tab="adicionar" role="tab" aria-selected="false">+ Add</button>
+    <button class="tab" data-tab="diario" role="tab" aria-selected="false">Diário</button>
+    <button class="tab" data-tab="backup" role="tab" aria-selected="false">⚙️</button>
+  </div>
+</header>
+
+<main>
+  <div class="view active" id="view-biblioteca" role="tabpanel">
+    <div id="supportAlertContainer"></div>
+    <div id="continueContainer"></div>
+    <div id="streakContainer"></div>
+    <div class="filter-bar" role="toolbar">
+      <button class="filter-chip active" data-filter="todos" aria-pressed="true">Todos</button>
+      <button class="filter-chip" data-filter="filme" aria-pressed="false">🎬</button>
+      <button class="filter-chip" data-filter="serie" aria-pressed="false">📺</button>
+      <button class="filter-chip" data-filter="love" aria-pressed="false">🤩</button>
+      <button class="filter-chip" data-filter="meh" aria-pressed="false">🫥</button>
+      <div class="search-ios"><span style="font-size:0.78rem;opacity:0.6" aria-hidden="true">🔍</span><input type="text" id="searchInput" placeholder="Buscar..." aria-label="Buscar títulos"></div>
+    </div>
+    <div class="sort-bar" role="toolbar">
+      <span style="font-size:0.65rem;color:#8e8e93;margin-right:4px;">📌 Ordenar:</span>
+      <button class="sort-chip" data-sort="recent" aria-pressed="false">📅 Recentes</button>
+      <button class="sort-chip" data-sort="name" aria-pressed="false">🔤 Nome A-Z</button>
+      <button class="sort-chip active" data-sort="progress" aria-pressed="true">🎯 Progresso</button>
+    </div>
+    <div class="cards-grid" id="bibliotecaGrid"></div>
+    <div class="empty-state hidden" id="emptyLibraryMsg"><div style="font-size:2.2rem;margin-bottom:0.5rem">📭</div>Nenhum título na biblioteca.<br>Toque em <strong>+ Add</strong> para começar.</div>
+  </div>
+
+  <div class="view" id="view-adicionar" role="tabpanel">
+    <div class="add-container">
+      <h2>➕ Novo título</h2>
+      <div class="field-group"><label for="urlInput">🔗 Link (streaming)</label><input type="url" id="urlInput" placeholder="https://..." aria-label="Link do streaming"></div>
+      <div class="field-group"><label>🖼 Capa (da galeria)</label><input type="file" id="imageFile" accept="image/*" style="display:none" aria-label="Escolher imagem de capa"><div class="btn-upload-img" onclick="document.getElementById('imageFile').click()" role="button" tabindex="0">📁 Escolher imagem</div><div class="preview-area" id="imagePreviewArea"></div></div>
+      <div class="field-group"><label for="nomeInput">📌 Nome</label><input type="text" id="nomeInput" placeholder="Ex: One Punch Man, Barbie..." aria-label="Nome do título"></div>
+      <div class="field-group"><label for="tipoSelect">🎭 Tipo</label><select id="tipoSelect" aria-label="Tipo do título"><option value="serie">📺 Série</option><option value="filme">🎬 Filme</option></select></div>
+      <button class="btn-primary" id="addBtn">+ ADICIONAR À BIBLIOTECA</button>
+    </div>
+  </div>
+
+  <div class="view" id="view-diario" role="tabpanel">
+    <div class="stats-group" id="statsMini"></div>
+    <div class="diary-card"><div class="diary-header"><span>📅 Data</span><span>Título</span><span>⭐</span><span style="text-align:right">Ação</span></div><div id="diaryList"></div></div>
+    <div class="empty-state hidden" id="emptyDiaryMsg"><div style="font-size:2rem;margin-bottom:0.5rem">📖</div>Diário vazio.<br>Finalize títulos na Biblioteca.</div>
+  </div>
+
+  <div class="view" id="view-backup" role="tabpanel">
+    <div class="backup-container">
+      <h2>💾 Backup Geral</h2>
+      <div class="backup-buttons">
+        <button class="backup-btn export" id="exportBackupBtn">📤 Exportar dados (JSON)</button>
+        <button class="backup-btn import" id="importBackupBtn">📥 Importar backup</button>
+        <button class="backup-btn reset" id="resetDataBtn">⚠️ Resetar todos os dados</button>
+      </div>
+      <div class="backup-info">
+        <div>📦 Os backups incluem: filmes, séries, capas, progresso, avaliações e diário.</div>
+        <div class="warning-text" style="margin-top:0.6rem">⚠️ Resetar remove TODOS os títulos e o diário permanentemente.</div>
+      </div>
+      <input type="file" id="importFileInput" accept="application/json" aria-label="Arquivo de backup JSON">
+    </div>
+  </div>
+</main>
+
+<div class="modal-mask hidden" id="editModal" role="dialog" aria-labelledby="editModalTitle">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <h3 id="editModalTitle">✏️ Editar título</h3>
+    <div class="field-group"><label for="editNome">Nome</label><input type="text" id="editNome" aria-label="Nome do título"></div>
+    <div class="field-group"><label for="editUrl">🔗 Link (streaming)</label><input type="url" id="editUrl" placeholder="https://..." aria-label="Link do streaming"></div>
+    <div class="field-group"><label>Nova capa</label><input type="file" id="editImageFile" accept="image/*" style="display:none" aria-label="Trocar imagem de capa"><div class="btn-upload-img" onclick="document.getElementById('editImageFile').click()" role="button" tabindex="0">📁 Trocar imagem</div><div id="editPreviewArea" class="preview-area"></div></div>
+    <div class="field-group"><label for="editTipo">Tipo</label><select id="editTipo" aria-label="Tipo do título"><option value="serie">📺 Série</option><option value="filme">🎬 Filme</option></select></div>
+    <div class="field-group" id="editEpGroup"><label>Progresso (Temporada / Episódio)</label><div style="display:flex;gap:8px"><input type="number" id="editTemp" placeholder="Temp" style="width:50%;flex:1" min="1" value="1" aria-label="Temporada"><input type="number" id="editEp" placeholder="Ep" style="width:50%;flex:1" min="1" value="1" aria-label="Episódio"></div></div>
+    <div class="field-group"><label for="editObs">Observação</label><textarea id="editObs" rows="2" placeholder="Anotação rápida..." aria-label="Observação"></textarea></div>
+    <div class="modal-actions"><button class="btn-cancel" id="cancelModalBtn">Cancelar</button><button class="btn-save-modal" id="saveModalBtn">Salvar</button></div>
+  </div>
+</div>
+
+<button class="fab-add" id="fabAddBtn" title="Adicionar título" aria-label="Adicionar novo título">+</button>
+
+<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  // ============================================================
+  //  CINEÁRIO — Código refatorado com todas as melhorias
+  // ============================================================
+
+  (function() {
+    'use strict';
+
+    // ========== ESTADO GLOBAL ==========
+    let items = [];
+    let currentFilter = "todos";
+    let currentSort = "progress";
+    let editingId = null;
+    let pendingImageData = null;
+    let tempEditImage = null;
+    let removeEditFlag = false;
+
+    // ========== CONSTANTES ==========
+    const STREAK_KEY = "cineario_streak";
+    const LASTOPEN_KEY = "cineario_lastOpen";
+    const SUPPORT_KEY = "cineario_lastSupportAlert";
+    const PAYMENT_LINK = "https://link.mercadopago.com.br/cineario";
+
+    // ========== HELPERS ==========
+    function escapeHtml(s) { 
+      if (!s) return ""; 
+      return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); 
+    }
+
+    function showToast(msg, ms = 1800) { 
+      const el = document.getElementById("toast"); 
+      el.textContent = msg; 
+      el.classList.add("show"); 
+      clearTimeout(el._t); 
+      el._t = setTimeout(() => el.classList.remove("show"), ms); 
+    }
+
+    function saveData() { 
+      try {
+        localStorage.setItem("cinearioItems", JSON.stringify(items)); 
+      } catch (e) {
+        showToast("⚠️ Erro ao salvar. Dados muito grandes?", 2500);
+        console.error(e);
+      }
+    }
+
+    function loadData() { 
+      const saved = localStorage.getItem("cinearioItems"); 
+      items = saved ? JSON.parse(saved) : []; 
+    }
+
+    // ========== STREAK ==========
+    function updateStreak() {
+      const todayStr = new Date().toDateString();
+      const lastOpen = localStorage.getItem(LASTOPEN_KEY);
+      let streak = parseInt(localStorage.getItem(STREAK_KEY) || "0", 10);
+
+      if (lastOpen === todayStr) {
+        return streak;
+      }
+      if (lastOpen) {
+        const diffDays = Math.round((new Date(todayStr) - new Date(lastOpen)) / 86400000);
+        streak = diffDays === 1 ? streak + 1 : 1;
+      } else {
+        streak = 1;
+      }
+      localStorage.setItem(STREAK_KEY, streak.toString());
+      localStorage.setItem(LASTOPEN_KEY, todayStr);
+      return streak;
+    }
+
+    function renderStreak() {
+      const container = document.getElementById("streakContainer");
+      if (!container) return;
+      const streak = parseInt(localStorage.getItem(STREAK_KEY) || "0", 10);
+      if (streak < 2) { container.innerHTML = ""; return; }
+      container.innerHTML = `
+        <div class="streak-bar">
+          <span class="streak-fire">🔥</span>
+          <span><span class="streak-num">${streak} dias</span> seguidos usando o CINEÁRIO. Continue assim!</span>
+        </div>
+      `;
+    }
+
+    // ========== CONTINUE ASSISTINDO ==========
+    function renderContinueWatching() {
+      const container = document.getElementById("continueContainer");
+      if (!container) return;
+      const pendentes = items.filter(i => !i.assistido);
+      if (!pendentes.length) { container.innerHTML = ""; return; }
+      
+      const emProgresso = pendentes.filter(i => i.tipo === "serie" && ((i.temp||1) > 1 || (i.ep||1) > 1));
+      const pick = emProgresso.length
+        ? emProgresso.sort((a,b) => (b.createdAt||0) - (a.createdAt||0))[0]
+        : pendentes.sort((a,b) => (b.createdAt||0) - (a.createdAt||0))[0];
+      
+      if (!pick) { container.innerHTML = ""; return; }
+      
+      const bg = pick.imageData
+        ? `<img class="hero-bg" src="${escapeHtml(pick.imageData)}" alt="Capa de ${escapeHtml(pick.nome)}">`
+        : `<div class="hero-bg-placeholder">${pick.tipo === "serie" ? "📺" : "🎬"}</div>`;
+      const sub = pick.tipo === "serie" ? `Temporada ${pick.temp || 1} • Episódio ${pick.ep || 1}` : "Filme pendente";
+
+      container.innerHTML = `
+        <div class="hero" id="heroCardBtn" role="button" tabindex="0" aria-label="Continuar assistindo ${escapeHtml(pick.nome)}">
+          ${bg}
+          <div class="hero-content">
+            <div class="hero-eyebrow">▶ Continue assistindo</div>
+            <div class="hero-title">${escapeHtml(pick.nome)}</div>
+            <div class="hero-sub">
+              <span class="hero-badge">${pick.tipo === "serie" ? "📺 Série" : "🎬 Filme"}</span>
+              <span>${sub}</span>
+            </div>
+            <div class="hero-actions">
+              <button class="hero-btn hero-btn-primary" id="heroPlayBtn">▶ Continuar</button>
+              <button class="hero-btn hero-btn-secondary" id="heroInfoBtn">ℹ️ Detalhes</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const openAction = () => { if (pick.tipo === "serie") openProgressModal(pick.id); else openEditModal(pick.id); };
+      const hero = document.getElementById("heroCardBtn");
+      const playBtn = document.getElementById("heroPlayBtn");
+      const infoBtn = document.getElementById("heroInfoBtn");
+      if (playBtn) playBtn.addEventListener("click", (e) => { e.stopPropagation(); if (pick.url) window.open(pick.url, "_blank", "noopener"); else openAction(); });
+      if (infoBtn) infoBtn.addEventListener("click", (e) => { e.stopPropagation(); openEditModal(pick.id); });
+      if (hero) {
+        hero.addEventListener("click", openAction);
+        hero.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openAction(); } });
+      }
+    }
+
+    // ========== APOIO ==========
+    function shouldShowSupportAlert() {
+      const lastShown = localStorage.getItem(SUPPORT_KEY);
+      if (!lastShown) return true;
+      const lastDate = new Date(parseInt(lastShown));
+      const now = new Date();
+      const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+      return diffDays >= 30;
+    }
+    
+    function recordSupportAlertShown() {
+      localStorage.setItem(SUPPORT_KEY, Date.now().toString());
+    }
+    
+    function renderSupportAlert() {
+      const container = document.getElementById("supportAlertContainer");
+      if (!container) return;
+      if (!shouldShowSupportAlert()) {
+        container.innerHTML = "";
+        return;
+      }
+      container.innerHTML = `
+        <div class="support-alert" id="supportAlertBox" role="alert">
+          <div class="support-text">
+            💖 <strong>Apoie o projeto!</strong>
+          </div>
+          <button class="support-btn" id="supportPayBtn">☕ Fazer um pix / Apoiar</button>
+          <button class="support-close" id="supportCloseBtn" aria-label="Fechar alerta">✕</button>
+        </div>
+      `;
+      const payBtn = document.getElementById("supportPayBtn");
+      const closeBtn = document.getElementById("supportCloseBtn");
+      if (payBtn) payBtn.addEventListener("click", () => {
+        window.open(PAYMENT_LINK, "_blank");
+        showToast("🙏 Muito obrigado pelo apoio! ❤️", 2500);
+        recordSupportAlertShown();
+        renderSupportAlert(); 
+      });
+      if (closeBtn) closeBtn.addEventListener("click", () => {
+        recordSupportAlertShown();
+        renderSupportAlert();
+      });
+    }
+
+    // ========== IMAGEM ==========
+    function resizeImage(file, maxWidth = 120, maxHeight = 160, callback) {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width, height = img.height;
+          if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+          if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          callback(canvas.toDataURL('image/jpeg', 0.7));
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ========== AVALIAÇÃO ==========
+    function setRating(id, rating) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.rating = rating;
+      saveData();
+      renderBiblioteca();
+      renderDiario();
+      const emoji = rating === 'love' ? '🤩' : '🫥';
+      showToast(`${emoji} "${item.nome}" avaliado como ${rating === 'love' ? 'Amei!' : 'Neutro'}`);
+    }
+
+    // ========== PROGRESSO ==========
+    function updateProgress(id, temp, ep) {
+      const item = items.find(i => i.id === id);
+      if (!item || item.tipo !== 'serie') return;
+      item.temp = Math.max(1, parseInt(temp) || 1);
+      item.ep = Math.max(1, parseInt(ep) || 1);
+      saveData();
+      renderBiblioteca();
+      renderDiario();
+      showToast(`📺 Progresso atualizado: T${item.temp} • E${item.ep}`);
+    }
+
+    function openProgressModal(id) {
+      const item = items.find(i => i.id === id);
+      if (!item || item.tipo !== 'serie') return;
+      const newTemp = prompt(`Temporada atual (${item.temp || 1}):`, item.temp || 1);
+      if (newTemp === null) return;
+      const newEp = prompt(`Episódio atual (${item.ep || 1}):`, item.ep || 1);
+      if (newEp === null) return;
+      updateProgress(id, newTemp, newEp);
+    }
+
+    // ========== ORDENAÇÃO ==========
+    function sortItems(itemsToSort) {
+      const sorted = [...itemsToSort];
+      switch(currentSort) {
+        case 'name':
+          sorted.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+          break;
+        case 'progress':
+          sorted.sort((a, b) => {
+            // Séries com progresso vêm primeiro, depois filmes
+            const aIsSerie = a.tipo === 'serie';
+            const bIsSerie = b.tipo === 'serie';
+            if (aIsSerie && !bIsSerie) return -1;
+            if (!aIsSerie && bIsSerie) return 1;
+            if (aIsSerie && bIsSerie) {
+              const pa = (a.temp || 1) * 100 + (a.ep || 1);
+              const pb = (b.temp || 1) * 100 + (b.ep || 1);
+              return pb - pa;
+            }
+            return 0;
+          });
+          break;
+        case 'recent':
+        default:
+          sorted.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          break;
+      }
+      return sorted;
+    }
+
+    // ========== FILTRO ==========
+    function getFilteredItems() {
+      const q = (document.getElementById("searchInput")?.value || "").toLowerCase();
+      if (currentFilter === "love" || currentFilter === "meh") {
+        return sortItems(items.filter(i => i.rating === currentFilter && i.nome.toLowerCase().includes(q)));
+      }
+      let filtered = items.filter(i => !i.assistido).filter(i => i.nome.toLowerCase().includes(q));
+      if (currentFilter === "filme") filtered = filtered.filter(i => i.tipo === "filme");
+      else if (currentFilter === "serie") filtered = filtered.filter(i => i.tipo === "serie");
+      return sortItems(filtered);
+    }
+
+    // ========== ADICIONAR IMAGEM ==========
+    function setupImageUpload() {
+      const input = document.getElementById("imageFile");
+      input.addEventListener("change", e => {
+        const file = e.target.files[0]; 
+        if (!file) return; 
+        resizeImage(file, 120, 160, (resizedData) => {
+          pendingImageData = resizedData; 
+          const previewArea = document.getElementById("imagePreviewArea");
+          previewArea.innerHTML = `<img class="preview-thumb" src="${pendingImageData}" alt="Prévia da capa"><button onclick="clearAddImage()" style="background:#ff3b30;border:none;border-radius:20px;padding:0.2rem 0.7rem;color:white;cursor:pointer;font-size:0.75rem" aria-label="Remover imagem">✕ Remover</button>`;
+        });
+      });
+    }
+    window.clearAddImage = function() { 
+      pendingImageData = null; 
+      document.getElementById("imagePreviewArea").innerHTML = ""; 
+      document.getElementById("imageFile").value = ""; 
+    };
+
+    // ========== ADICIONAR ITEM ==========
+    function addNewItem() {
+      const url = document.getElementById("urlInput").value.trim();
+      const nome = document.getElementById("nomeInput").value.trim();
+      const tipo = document.getElementById("tipoSelect").value;
+      
+      const nomeInput = document.getElementById("nomeInput");
+      nomeInput.classList.remove("error");
+      
+      if (!nome) { 
+        showToast("⚠ Digite o nome do título"); 
+        nomeInput.classList.add("error");
+        nomeInput.focus();
+        return; 
+      }
+      
+      items.unshift({ 
+        id: Date.now() + "-" + Math.random().toString(36).substr(2,6), 
+        nome, url: url || null, tipo, 
+        imageData: pendingImageData || null, 
+        assistido: false, 
+        ep: tipo === "serie" ? 1 : null, 
+        temp: tipo === "serie" ? 1 : null, 
+        nota: "", rating: null, watchedAt: null,
+        createdAt: Date.now()
+      });
+      saveData();
+      
+      document.getElementById("urlInput").value = ""; 
+      document.getElementById("nomeInput").value = ""; 
+      document.getElementById("tipoSelect").value = "serie"; 
+      clearAddImage();
+      
+      const btn = document.getElementById("addBtn"); 
+      const original = btn.textContent;
+      btn.textContent = "✓ Adicionado!"; 
+      btn.classList.add("success");
+      setTimeout(() => { 
+        btn.textContent = original; 
+        btn.classList.remove("success");
+      }, 1400);
+      
+      showToast(`✓ "${nome}" adicionado!`);
+      switchTab("biblioteca");
+    }
+
+    // ========== RENDER BIBLIOTECA ==========
+    function renderBiblioteca() {
+      const grid = document.getElementById("bibliotecaGrid"); 
+      const emptyMsg = document.getElementById("emptyLibraryMsg"); 
+      const lista = getFilteredItems();
+      
+      if (!lista.length) { 
+        grid.innerHTML = ""; 
+        emptyMsg.classList.remove("hidden"); 
+        return; 
+      }
+      emptyMsg.classList.add("hidden");
+      
+      grid.innerHTML = lista.map(item => posterCardHtml(item)).join("");
+      bindPosterEvents(grid);
+      
+      renderContinueWatching();
+    }
+
+    // ========== POSTER CARD (estilo streaming) ==========
+    function posterCardHtml(item) {
+      const isCompleted = item.assistido === true;
+      const thumb = item.imageData ?
+        `<img class="poster-cover" src="${escapeHtml(item.imageData)}" loading="lazy" alt="Capa de ${escapeHtml(item.nome)}">` :
+        `<div class="poster-placeholder ${item.tipo}">${item.tipo === "serie" ? "📺" : "🎬"}</div>`;
+
+      const ratingTag = item.rating ? `<div class="poster-rating-tag">${item.rating === 'love' ? '🤩' : '🫥'}</div>` : "";
+
+      let progressOverlay = "";
+      if (item.tipo === "serie" && !isCompleted) {
+        const pct = Math.min(100, ((item.ep || 1) % 24) / 24 * 100 + 8);
+        progressOverlay = `
+          <div class="poster-progress-overlay" data-id="${item.id}" data-act="progress" role="button" tabindex="0">
+            T${item.temp || 1} • E${item.ep || 1}
+            <div class="poster-progress-bar"><div class="poster-progress-fill" style="width:${pct}%"></div></div>
+          </div>`;
+      } else if (isCompleted) {
+        progressOverlay = `<div class="poster-progress-overlay">✓ Finalizado</div>`;
+      }
+
+      const activeLove = item.rating === 'love' ? 'active-love' : '';
+      const activeMeh = item.rating === 'meh' ? 'active-meh' : '';
+      const finishBtn = isCompleted
+        ? `<button class="poster-qbtn finish" disabled>✓</button>`
+        : `<button class="poster-qbtn finish" data-id="${item.id}" data-act="finalizar" title="Finalizar">✓</button>`;
+      const linkBtn = item.url
+        ? `<button class="poster-qbtn" data-id="${item.id}" data-act="link" title="Abrir no streaming">▶</button>`
+        : `<button class="poster-qbtn" data-id="${item.id}" data-act="editar" title="Editar">✏️</button>`;
+
+      return `<div class="poster-card">
+        <div class="poster-wrap" data-id="${item.id}" data-act="${item.tipo === 'serie' && !isCompleted ? 'progress' : 'editar'}">
+          <span class="poster-type-tag ${item.tipo}">${item.tipo === "serie" ? "SÉRIE" : "FILME"}</span>
+          ${ratingTag}
+          ${thumb}
+          ${progressOverlay}
+        </div>
+        <div class="poster-title" title="${escapeHtml(item.nome)}">${escapeHtml(item.nome)}</div>
+        <div class="poster-quickbar">
+          <button class="poster-qbtn love ${activeLove}" data-id="${item.id}" data-rating="love" aria-label="Avaliar como amei">🤩</button>
+          <button class="poster-qbtn meh ${activeMeh}" data-id="${item.id}" data-rating="meh" aria-label="Avaliar como neutro">🫥</button>
+          ${finishBtn}
+          ${linkBtn}
+          <button class="poster-qbtn" data-id="${item.id}" data-act="deletar" title="Remover">🗑</button>
+        </div>
+      </div>`;
+    }
+
+    function bindPosterEvents(container) {
+      container.querySelectorAll("[data-act='finalizar']").forEach(b => b.addEventListener("click", (e) => { e.stopPropagation(); finalizarItem(b.dataset.id); }));
+      container.querySelectorAll("[data-act='editar']:not(.poster-wrap)").forEach(b => b.addEventListener("click", (e) => { e.stopPropagation(); openEditModal(b.dataset.id); }));
+      container.querySelectorAll("[data-act='deletar']").forEach(b => b.addEventListener("click", (e) => { e.stopPropagation(); deleteItem(b.dataset.id); }));
+      container.querySelectorAll("[data-act='link']").forEach(b => b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const item = items.find(i => i.id === b.dataset.id);
+        if (item && item.url) window.open(item.url, "_blank", "noopener");
+      }));
+      container.querySelectorAll(".poster-wrap[data-act='progress'], .poster-progress-overlay[data-act='progress']").forEach(b => {
+        b.addEventListener("click", (e) => { e.stopPropagation(); openProgressModal(b.dataset.id); });
+        b.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProgressModal(b.dataset.id); }
+        });
+      });
+      container.querySelectorAll(".poster-wrap[data-act='editar']").forEach(b => {
+        b.addEventListener("click", () => openEditModal(b.dataset.id));
+      });
+      container.querySelectorAll(".poster-qbtn[data-rating]").forEach(b => b.addEventListener("click", (e) => { e.stopPropagation(); setRating(b.dataset.id, b.dataset.rating); }));
+    }
+
+    // ========== AÇÕES ==========
+    function finalizarItem(id) { 
+      const item = items.find(i => i.id === id); 
+      if (!item || item.assistido) return; 
+      item.assistido = true; 
+      item.watchedAt = new Date().toISOString(); 
+      saveData(); 
+      renderBiblioteca(); 
+      renderDiario(); 
+      showToast(`🎉 "${item.nome}" finalizado!`); 
+    }
+    
+    function desfazerFinalizado(id) { 
+      const item = items.find(i => i.id === id); 
+      if (!item) return; 
+      item.assistido = false; 
+      item.watchedAt = null; 
+      saveData(); 
+      renderBiblioteca(); 
+      renderDiario(); 
+      showToast("↩ Desfeito."); 
+    }
+    
+    function deleteItem(id) { 
+      const item = items.find(i => i.id === id); 
+      if (!item) return; 
+      if (!confirm(`Remover "${item.nome}"?`)) return; 
+      items = items.filter(i => i.id !== id); 
+      saveData(); 
+      renderBiblioteca(); 
+      renderDiario(); 
+      showToast("🗑 Removido."); 
+    }
+
+    // ========== DIÁRIO ==========
+    function renderDiario() {
+      const assistidos = items.filter(i => i.assistido).sort((a,b) => new Date(b.watchedAt) - new Date(a.watchedAt));
+      const totalFilmes = items.filter(i => i.tipo === "filme" && i.assistido).length;
+      const totalSeries = items.filter(i => i.tipo === "serie" && i.assistido).length;
+      const pendentes = items.filter(i => !i.assistido).length;
+      const loveCount = items.filter(i => i.rating === "love").length;
+      const mehCount = items.filter(i => i.rating === "meh").length;
+      
+      document.getElementById("statsMini").innerHTML = `
+        <div class="stat-item"><div class="stat-number">${items.length}</div><div class="stat-label">Total</div></div>
+        <div class="stat-item"><div class="stat-number" style="color:#ff453a">${totalFilmes}</div><div class="stat-label">Filmes</div></div>
+        <div class="stat-item"><div class="stat-number" style="color:var(--blue)">${totalSeries}</div><div class="stat-label">Séries</div></div>
+        <div class="stat-item"><div class="stat-number" style="color:var(--love)">${loveCount}</div><div class="stat-label">🤩</div></div>
+        <div class="stat-item"><div class="stat-number" style="color:var(--meh)">${mehCount}</div><div class="stat-label">🫥</div></div>
+        <div class="stat-item"><div class="stat-number" style="color:var(--accent2)">${pendentes}</div><div class="stat-label">Pendentes</div></div>
+      `;
+      
+      const container = document.getElementById("diaryList"); 
+      const emptyEl = document.getElementById("emptyDiaryMsg");
+      if (!assistidos.length) { container.innerHTML = ""; emptyEl.classList.remove("hidden"); return; }
+      emptyEl.classList.add("hidden");
+      
+      container.innerHTML = assistidos.map(item => {
+        const d = item.watchedAt ? new Date(item.watchedAt).toLocaleDateString("pt-BR") : "—";
+        const ratingEmoji = item.rating === 'love' ? '🤩' : (item.rating === 'meh' ? '🫥' : '⭐');
+        return `<div class="diary-row">
+          <div class="diary-date">${d}</div>
+          <div class="diary-title-cell" title="${escapeHtml(item.nome)}">${escapeHtml(item.nome)}</div>
+          <div class="diary-rating">${ratingEmoji}</div>
+          <div class="diary-actions-cell"><button class="undo-btn" data-id="${item.id}" title="Desfazer" aria-label="Desfazer finalização">↩</button><button class="remove-diary-btn" data-id="${item.id}" title="Remover" aria-label="Remover do diário">🗑</button></div>
+        </div>`;
+      }).join("");
+      
+      container.querySelectorAll(".undo-btn").forEach(b => b.addEventListener("click", () => desfazerFinalizado(b.dataset.id)));
+      container.querySelectorAll(".remove-diary-btn").forEach(b => b.addEventListener("click", () => deleteItem(b.dataset.id)));
+    }
+
+    // ========== EDIÇÃO ==========
+    function setupEditImageUpload() { 
+      document.getElementById("editImageFile").addEventListener("change", e => { 
+        const file = e.target.files[0]; 
+        if (!file) return; 
+        resizeImage(file, 120, 160, (resizedData) => {
+          tempEditImage = resizedData; 
+          removeEditFlag = false; 
+          document.getElementById("editPreviewArea").innerHTML = `<img class="preview-thumb" src="${tempEditImage}" alt="Prévia da nova capa"><button onclick="clearEditTemp()" style="background:#ff3b30;border:none;border-radius:20px;padding:0.2rem 0.6rem;color:white;cursor:pointer;font-size:0.75rem" aria-label="Remover imagem">✕</button>`;
+        });
+      }); 
+    }
+    
+    window.clearEditTemp = function() { 
+      removeEditFlag = true; 
+      tempEditImage = null; 
+      document.getElementById("editPreviewArea").innerHTML = ""; 
+      document.getElementById("editImageFile").value = ""; 
+    };
+    
+    function openEditModal(id) { 
+      editingId = id; 
+      const item = items.find(i => i.id === id); 
+      if (!item) return; 
+      
+      document.getElementById("editNome").value = item.nome || ""; 
+      document.getElementById("editUrl").value = item.url || ""; 
+      document.getElementById("editTipo").value = item.tipo; 
+      document.getElementById("editTemp").value = item.temp || 1; 
+      document.getElementById("editEp").value = item.ep || 1; 
+      document.getElementById("editObs").value = item.nota || ""; 
+      
+      document.getElementById("editPreviewArea").innerHTML = item.imageData ? 
+        `<img class="preview-thumb" src="${item.imageData}" alt="Capa atual"><button onclick="clearEditTemp()" style="background:#ff3b30;border:none;border-radius:20px;padding:0.2rem 0.6rem;color:white;cursor:pointer;font-size:0.75rem" aria-label="Remover imagem">✕</button>` : ""; 
+      
+      tempEditImage = null; 
+      removeEditFlag = false; 
+      document.getElementById("editImageFile").value = ""; 
+      document.getElementById("editEpGroup").style.display = item.tipo === "serie" ? "block" : "none"; 
+      document.getElementById("editModal").classList.remove("hidden");
+      
+      // Foco no campo nome após abrir
+      setTimeout(() => document.getElementById("editNome").focus(), 100);
+    }
+    
+    function closeModal() { 
+      document.getElementById("editModal").classList.add("hidden"); 
+      editingId = null; 
+    }
+    
+    function saveEditModal() { 
+      const item = items.find(i => i.id === editingId); 
+      if (!item) return; 
+      
+      const nome = document.getElementById("editNome").value.trim(); 
+      if (!nome) { 
+        showToast("⚠ Nome não pode ser vazio"); 
+        document.getElementById("editNome").focus();
+        return; 
+      } 
+      
+      item.nome = nome; 
+      item.url = document.getElementById("editUrl").value.trim() || null; 
+      item.tipo = document.getElementById("editTipo").value; 
+      
+      if (tempEditImage) item.imageData = tempEditImage; 
+      else if (removeEditFlag) item.imageData = null; 
+      
+      if (item.tipo === "serie") { 
+        item.temp = Math.max(1, parseInt(document.getElementById("editTemp").value)||1); 
+        item.ep = Math.max(1, parseInt(document.getElementById("editEp").value)||1); 
+      } else { 
+        item.temp = null; 
+        item.ep = null; 
+      } 
+      item.nota = document.getElementById("editObs").value; 
+      
+      saveData(); 
+      renderBiblioteca(); 
+      renderDiario(); 
+      showToast("✓ Salvo!"); 
+      closeModal(); 
+    }
+
+    // ========== BACKUP ==========
+    function exportBackup() {
+      const backup = { version: "2.0", exportedAt: new Date().toISOString(), items: items };
+      const dataStr = JSON.stringify(backup, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cineario_backup_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("📦 Backup exportado com sucesso!", 2000);
+    }
+
+    function importBackup(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const backup = JSON.parse(e.target.result);
+          if (backup.items && Array.isArray(backup.items)) {
+            // Verifica tamanho aproximado
+            const size = JSON.stringify(backup).length;
+            if (size > 4.5 * 1024 * 1024) {
+              showToast("⚠️ Backup muito grande. Considere reduzir imagens.", 3000);
+            }
+            items = backup.items;
+            saveData();
+            renderBiblioteca();
+            renderDiario();
+            showToast("✅ Backup importado! " + items.length + " títulos restaurados.", 2500);
+            switchTab("biblioteca");
+          } else { throw new Error("Formato inválido"); }
+        } catch (err) { 
+          showToast("❌ Arquivo inválido ou corrompido", 2000); 
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetAllData() {
+      if (confirm("⚠️ ATENÇÃO: Isso irá apagar TODOS os seus filmes, séries e diário permanentemente. Esta ação não pode ser desfeita. Deseja continuar?")) {
+        if (confirm("Última chance: Tem certeza?")) {
+          items = [];
+          saveData();
+          renderBiblioteca();
+          renderDiario();
+          showToast("🗑️ Todos os dados foram removidos.", 2000);
+          switchTab("biblioteca");
+        }
+      }
+    }
+
+    // ========== NAVEGAÇÃO ==========
+    function switchTab(name) { 
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active")); 
+      document.querySelectorAll(".tab").forEach(t => {
+        t.classList.remove("active");
+        t.setAttribute("aria-selected", "false");
+      }); 
+      
+      document.getElementById("view-" + name).classList.add("active"); 
+      const tab = document.querySelector(`.tab[data-tab="${name}"]`);
+      if (tab) {
+        tab.classList.add("active");
+        tab.setAttribute("aria-selected", "true");
+      }
+      
+      if (name === "diario") renderDiario(); 
+      if (name === "biblioteca") { 
+        renderBiblioteca(); 
+        renderSupportAlert(); 
+        renderStreak(); 
+        renderContinueWatching(); 
+      }
+      
+      document.getElementById("fabAddBtn").classList.toggle("hidden", name === "adicionar");
+      
+      if (name === "adicionar") {
+        setTimeout(() => document.getElementById("nomeInput")?.focus(), 150);
+      }
+    }
+
+    // ========== EVENTOS ==========
+    function bindEvents() {
+      // Tabs
+      document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+      
+      // Filtros
+      document.querySelectorAll(".filter-chip").forEach(btn => btn.addEventListener("click", () => { 
+        currentFilter = btn.dataset.filter; 
+        document.querySelectorAll(".filter-chip").forEach(b => {
+          b.classList.remove("active");
+          b.setAttribute("aria-pressed", "false");
+        }); 
+        btn.classList.add("active");
+        btn.setAttribute("aria-pressed", "true");
+        renderBiblioteca(); 
+      }));
+      
+      // Ordenação
+      document.querySelectorAll(".sort-chip").forEach(btn => btn.addEventListener("click", () => { 
+        currentSort = btn.dataset.sort; 
+        document.querySelectorAll(".sort-chip").forEach(b => {
+          b.classList.remove("active");
+          b.setAttribute("aria-pressed", "false");
+        }); 
+        btn.classList.add("active");
+        btn.setAttribute("aria-pressed", "true");
+        renderBiblioteca(); 
+      }));
+      
+      // Busca
+      document.getElementById("searchInput")?.addEventListener("input", renderBiblioteca);
+      
+      // Adicionar
+      document.getElementById("addBtn")?.addEventListener("click", addNewItem);
+      document.getElementById("nomeInput")?.addEventListener("keydown", e => { 
+        if (e.key === "Enter") { 
+          e.preventDefault(); 
+          addNewItem(); 
+        } 
+      });
+      document.getElementById("urlInput")?.addEventListener("keydown", e => { 
+        if (e.key === "Enter") { 
+          e.preventDefault(); 
+          document.getElementById("nomeInput")?.focus(); 
+        } 
+      });
+      
+      // Modal
+      document.getElementById("cancelModalBtn")?.addEventListener("click", closeModal);
+      document.getElementById("saveModalBtn")?.addEventListener("click", saveEditModal);
+      
+      // Fechar modal ao clicar fora (fundo)
+      document.getElementById("editModal")?.addEventListener("click", e => { 
+        if (e.target === document.getElementById("editModal")) closeModal(); 
+      });
+      
+      // Fechar modal com ESC
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          const modal = document.getElementById("editModal");
+          if (!modal.classList.contains("hidden")) closeModal();
+        }
+      });
+      
+      // Tipo no modal
+      document.getElementById("editTipo")?.addEventListener("change", e => { 
+        document.getElementById("editEpGroup").style.display = e.target.value === "serie" ? "block" : "none"; 
+      });
+      
+      // Backup
+      document.getElementById("exportBackupBtn")?.addEventListener("click", exportBackup);
+      document.getElementById("importBackupBtn")?.addEventListener("click", () => document.getElementById("importFileInput").click());
+      document.getElementById("resetDataBtn")?.addEventListener("click", resetAllData);
+      document.getElementById("importFileInput")?.addEventListener("change", e => { 
+        if (e.target.files.length) importBackup(e.target.files[0]); 
+        e.target.value = ""; 
+      });
+      
+      // FAB
+      document.getElementById("fabAddBtn")?.addEventListener("click", () => switchTab("adicionar"));
+    }
+
+    // ========== INICIALIZAÇÃO ==========
+    function init() {
+      loadData();
+      setupImageUpload();
+      setupEditImageUpload();
+      bindEvents();
+      updateStreak();
+      renderBiblioteca();
+      renderDiario();
+      renderSupportAlert();
+      renderStreak();
+      renderContinueWatching();
+    }
+
+    // Inicia quando o DOM estiver pronto
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
+
+  })();
+</script>
+</body>
+</html>
