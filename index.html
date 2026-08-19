@@ -95,6 +95,71 @@
     .view.active { display: block; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* ===== STREAK / CONTINUE ASSISTINDO ===== */
+    .streak-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: linear-gradient(135deg, rgba(255,149,0,0.16), rgba(255,59,48,0.10));
+      border: 0.5px solid rgba(255,149,0,0.35);
+      border-radius: 22px;
+      padding: 0.55rem 0.9rem;
+      margin-bottom: 0.7rem;
+      font-size: 0.75rem; font-weight: 600;
+      animation: fadeUp 0.3s ease;
+    }
+    .streak-fire { font-size: 1rem; }
+    .streak-num { color: var(--accent2); font-weight: 800; }
+
+    .continue-card {
+      display: flex; align-items: center; gap: 0.7rem;
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 0.7rem 0.8rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: 0.15s;
+      animation: fadeUp 0.3s ease;
+    }
+    .continue-card:active { transform: scale(0.98); background: rgba(30,30,40,0.92); }
+    .continue-label {
+      font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 2px;
+    }
+    .continue-title { font-size: 0.85rem; font-weight: 700; }
+    .continue-sub { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+    .continue-cover {
+      width: 44px; height: 62px; border-radius: 10px; object-fit: cover; flex-shrink: 0;
+      border: 0.5px solid rgba(255,255,255,0.12);
+    }
+    .continue-cover-placeholder {
+      width: 44px; height: 62px; border-radius: 10px; flex-shrink: 0;
+      background: #2c2c38; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .continue-arrow { margin-left: auto; color: var(--muted); font-size: 1.1rem; }
+
+    /* ===== FAB ===== */
+    .fab-add {
+      position: fixed;
+      right: 1.1rem;
+      bottom: calc(1.3rem + env(safe-area-inset-bottom, 0px));
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff3b30, #ff9500);
+      border: none;
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 20px rgba(255, 59, 48, 0.45);
+      cursor: pointer;
+      z-index: 90;
+      transition: transform 0.15s, opacity 0.2s;
+    }
+    .fab-add:active { transform: scale(0.9); }
+    .fab-add.hidden { display: none !important; }
+
     /* ===== FILTER BAR ===== */
     .filter-bar {
       background: rgba(0, 0, 0, 0.6);
@@ -646,6 +711,8 @@
 <main>
   <div class="view active" id="view-biblioteca">
     <div id="supportAlertContainer"></div>
+    <div id="streakContainer"></div>
+    <div id="continueContainer"></div>
     <div class="filter-bar">
       <button class="filter-chip active" data-filter="todos">Todos</button>
       <button class="filter-chip" data-filter="filme">🎬</button>
@@ -712,6 +779,8 @@
   </div>
 </div>
 
+<button class="fab-add" id="fabAddBtn" title="Adicionar título">+</button>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -722,6 +791,76 @@
   let pendingImageData = null;
   let tempEditImage = null;
   let removeEditFlag = false;
+
+  // ========== STREAK DE USO ==========
+  const STREAK_KEY = "cineario_streak";
+  const LASTOPEN_KEY = "cineario_lastOpen";
+
+  function updateStreak() {
+    const todayStr = new Date().toDateString();
+    const lastOpen = localStorage.getItem(LASTOPEN_KEY);
+    let streak = parseInt(localStorage.getItem(STREAK_KEY) || "0", 10);
+
+    if (lastOpen === todayStr) {
+      return streak; // já contabilizado hoje
+    }
+    if (lastOpen) {
+      const diffDays = Math.round((new Date(todayStr) - new Date(lastOpen)) / 86400000);
+      streak = diffDays === 1 ? streak + 1 : 1;
+    } else {
+      streak = 1;
+    }
+    localStorage.setItem(STREAK_KEY, streak.toString());
+    localStorage.setItem(LASTOPEN_KEY, todayStr);
+    return streak;
+  }
+
+  function renderStreak() {
+    const container = document.getElementById("streakContainer");
+    if (!container) return;
+    const streak = parseInt(localStorage.getItem(STREAK_KEY) || "0", 10);
+    if (streak < 2) { container.innerHTML = ""; return; }
+    container.innerHTML = `
+      <div class="streak-bar">
+        <span class="streak-fire">🔥</span>
+        <span><span class="streak-num">${streak} dias</span> seguidos usando o CINEÁRIO. Continue assim!</span>
+      </div>
+    `;
+  }
+
+  // ========== CONTINUE ASSISTINDO ==========
+  function renderContinueWatching() {
+    const container = document.getElementById("continueContainer");
+    if (!container) return;
+    const pendentes = items.filter(i => !i.assistido);
+    if (!pendentes.length) { container.innerHTML = ""; return; }
+    // prioriza séries com progresso (temp/ep > 1) mais recentes, senão o item mais recente
+    const emProgresso = pendentes.filter(i => i.tipo === "serie" && ((i.temp||1) > 1 || (i.ep||1) > 1));
+    const pick = emProgresso.length
+      ? emProgresso.sort((a,b) => (b.createdAt||0) - (a.createdAt||0))[0]
+      : pendentes.sort((a,b) => (b.createdAt||0) - (a.createdAt||0))[0];
+    if (!pick) { container.innerHTML = ""; return; }
+    const thumb = pick.imageData
+      ? `<img class="continue-cover" src="${escapeHtml(pick.imageData)}">`
+      : `<div class="continue-cover-placeholder">${pick.tipo==="serie"?"📺":"🎬"}</div>`;
+    const sub = pick.tipo === "serie" ? `T${pick.temp||1} • E${pick.ep||1}` : "Filme pendente";
+    container.innerHTML = `
+      <div class="continue-card" id="continueCardBtn">
+        ${thumb}
+        <div>
+          <div class="continue-label">▶ Continue assistindo</div>
+          <div class="continue-title">${escapeHtml(pick.nome)}</div>
+          <div class="continue-sub">${sub}</div>
+        </div>
+        <div class="continue-arrow">›</div>
+      </div>
+    `;
+    const card = document.getElementById("continueCardBtn");
+    if (card) card.addEventListener("click", () => {
+      if (pick.tipo === "serie") openProgressModal(pick.id);
+      else openEditModal(pick.id);
+    });
+  }
 
   // ========== SISTEMA DE ALERTA MENSAL DE APOIO ==========
   const SUPPORT_KEY = "cineario_lastSupportAlert";
@@ -934,6 +1073,7 @@
     grid.querySelectorAll("[data-act='deletar']").forEach(b => b.addEventListener("click", () => deleteItem(b.dataset.id)));
     grid.querySelectorAll("[data-act='progress']").forEach(b => b.addEventListener("click", () => openProgressModal(b.dataset.id)));
     grid.querySelectorAll(".rating-btn").forEach(b => b.addEventListener("click", () => setRating(b.dataset.id, b.dataset.rating)));
+    renderContinueWatching();
   }
 
   function finalizarItem(id) { 
@@ -1118,7 +1258,11 @@
     document.getElementById("view-" + name).classList.add("active"); 
     document.querySelector(`.tab[data-tab="${name}"]`).classList.add("active"); 
     if (name === "diario") renderDiario(); 
-    if (name === "biblioteca") { renderBiblioteca(); renderSupportAlert(); }
+    if (name === "biblioteca") { renderBiblioteca(); renderSupportAlert(); renderStreak(); renderContinueWatching(); }
+    document.getElementById("fabAddBtn").classList.toggle("hidden", name === "adicionar");
+    if (name === "adicionar") {
+      setTimeout(() => document.getElementById("nomeInput")?.focus(), 150);
+    }
   }
 
   function bindEvents() {
@@ -1145,15 +1289,21 @@
     document.getElementById("importBackupBtn")?.addEventListener("click", () => document.getElementById("importFileInput").click());
     document.getElementById("resetDataBtn")?.addEventListener("click", resetAllData);
     document.getElementById("importFileInput")?.addEventListener("change", e => { if (e.target.files.length) importBackup(e.target.files[0]); e.target.value = ""; });
+    document.getElementById("fabAddBtn")?.addEventListener("click", () => switchTab("adicionar"));
+    document.getElementById("nomeInput")?.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addNewItem(); } });
+    document.getElementById("urlInput")?.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById("nomeInput")?.focus(); } });
   }
 
   loadData(); 
   setupImageUpload();
   setupEditImageUpload(); 
   bindEvents(); 
+  updateStreak();
   renderBiblioteca(); 
   renderDiario();
   renderSupportAlert();
+  renderStreak();
+  renderContinueWatching();
 </script>
 </body>
 </html>
