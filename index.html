@@ -10,7 +10,6 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  /* ===== TEMA ESCURO - PALETA LÉSBICA NEON ===== */
   :root {
     --les-orange-dark: #d52d00;
     --les-orange: #ef7627;
@@ -602,12 +601,11 @@
   .undo-btn:active, .remove-diary-btn:active, .info-diary-btn:active {
     transform: scale(0.92); opacity: 0.7;
   }
-  .remove-diary-btn { color: var(--les-orange-dark); background: rgba(213, 45, 0, 0.15); border-color: rgba(213,45,0,0.4); }
+  .remove-diary-btn { color: var(--les-orange-dark); background: rgba(213, 45, 0, 0.15); border-color: rgba(213,45,0.4); }
   .diary-rating { font-size: 0.75rem; text-align: center; }
 
   .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--muted); font-size: 0.85rem; line-height: 1.6; grid-column: 1 / -1; }
 
-  /* ===== BACKUP / CONFIGURAÇÕES (ATUALIZADO) ===== */
   .backup-buttons { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem; }
   .backup-btn {
     background: var(--surface2); border: 1px solid var(--input-border); border-radius: 18px; padding: 1rem;
@@ -731,10 +729,10 @@
     <button class="theme-toggle" id="themeToggle" title="Alternar tema" aria-label="Alternar tema claro/escuro">🌙</button>
   </div>
   <nav class="tab-bar-ios" role="tablist" aria-label="Navegação principal">
-    <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true">Início</button>
-    <button class="tab" data-tab="calendario" role="tab" aria-selected="false">📅</button>
-    <button class="tab" data-tab="diario" role="tab" aria-selected="false">Diário</button>
-    <button class="tab" data-tab="backup" role="tab" aria-selected="false">⚙️</button>
+    <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true" aria-controls="view-biblioteca">Início</button>
+    <button class="tab" data-tab="calendario" role="tab" aria-selected="false" aria-controls="view-calendario" aria-label="Calendário">📅</button>
+    <button class="tab" data-tab="diario" role="tab" aria-selected="false" aria-controls="view-diario">Diário</button>
+    <button class="tab" data-tab="backup" role="tab" aria-selected="false" aria-controls="view-backup" aria-label="Configurações e backup">⚙️</button>
   </nav>
 </header>
 
@@ -809,7 +807,6 @@
     <div class="empty-state hidden" id="emptyDiaryMsg"><div style="font-size:2rem;margin-bottom:0.5rem">📖</div>Diário vazio.<br>Finalize títulos na Biblioteca.</div>
   </div>
 
-  <!-- ===== ABA CONFIGURAÇÕES / BACKUP ATUALIZADA ===== -->
   <div class="view" id="view-backup" role="tabpanel">
     <div class="backup-container">
       <h2>💾 Configurações do Diário</h2>
@@ -830,6 +827,7 @@
       <div class="backup-info">
         <div>📦 O <strong>Diário do CINEÁRIO</strong> inclui: filmes, séries, capas, progresso, avaliações, favoritos, notas e histórico.</div>
         <div style="margin-top:0.4rem">🗄️ Os dados são salvos automaticamente no seu dispositivo com IndexedDB.</div>
+        <div style="margin-top:0.4rem">🔗 Links de streaming são atualizados automaticamente ao abrir o app.</div>
         <div class="warning-text" style="margin-top:0.6rem">⚠️ Excluir remove TODOS os títulos e o diário permanentemente.</div>
       </div>
       <input type="file" id="importFileInput" accept="application/json" aria-label="Arquivo do Diário do CINEÁRIO em JSON">
@@ -950,30 +948,6 @@
     el._t = setTimeout(() => el.classList.remove("show"), ms);
   }
 
-  function calcularEpisodios(dataEstreia, totalEp, epAtual) {
-    if (!dataEstreia || !totalEp || totalEp < 1) return null;
-    const hoje = new Date(); hoje.setHours(0,0,0,0);
-    const hojeTime = hoje.getTime();
-    const partes = dataEstreia.split('-');
-    const estreia = new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
-    estreia.setHours(0,0,0,0);
-    const estreiaTime = estreia.getTime();
-    const diffDias = Math.floor((hojeTime - estreiaTime) / 86400000);
-    const epAtualNum = Math.max(1, parseInt(epAtual) || 1);
-    const epLancado = Math.floor(diffDias / 7) + 1;
-    if (diffDias < 0) {
-      const proximaData = new Date(estreiaTime);
-      return { epLancado: 0, proximoEp: 1, proximaData, totalEp, diaSemana: estreia.getDay(), dataEstreia, emExibicao: false, jaEstreou: false, finalizada: false };
-    }
-    if (epLancado >= totalEp) {
-      const dataUltimo = new Date(estreiaTime + (totalEp - 1) * 7 * 86400000);
-      return { epLancado: totalEp, proximoEp: null, proximaData: null, totalEp, diaSemana: estreia.getDay(), dataEstreia, emExibicao: false, jaEstreou: true, finalizada: true, dataUltimo };
-    }
-    const proximoEp = epLancado + 1;
-    const proximaData = new Date(estreiaTime + (proximoEp - 1) * 7 * 86400000);
-    return { epLancado, proximoEp, proximaData, totalEp, diaSemana: estreia.getDay(), dataEstreia, emExibicao: true, jaEstreou: true, finalizada: false };
-  }
-
   function parseDataLocal(dt) {
     if (!dt) return null;
     if (dt instanceof Date) return new Date(dt.getTime());
@@ -981,6 +955,31 @@
     const match = valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 0, 0, 0, 0);
     return new Date(valor);
+  }
+
+  function calcularEpisodios(dataEstreia, totalEp) {
+    if (!dataEstreia || !totalEp || totalEp < 1) return null;
+    const estreia = parseDataLocal(dataEstreia);
+    if (!estreia || Number.isNaN(estreia.getTime())) return null;
+    estreia.setHours(0,0,0,0);
+
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const hojeTime = hoje.getTime();
+    const estreiaTime = estreia.getTime();
+    const diffDias = Math.floor((hojeTime - estreiaTime) / 86400000);
+
+    if (diffDias < 0) {
+      const proximaData = new Date(estreiaTime);
+      return { epLancado: 0, proximoEp: 1, proximaData, totalEp, diaSemana: estreia.getDay(), dataEstreia, emExibicao: false, jaEstreou: false, finalizada: false };
+    }
+    const epLancado = Math.floor(diffDias / 7) + 1;
+    if (epLancado >= totalEp) {
+      const dataUltimo = new Date(estreiaTime + (totalEp - 1) * 7 * 86400000);
+      return { epLancado: totalEp, proximoEp: null, proximaData: null, totalEp, diaSemana: estreia.getDay(), dataEstreia, emExibicao: false, jaEstreou: true, finalizada: true, dataUltimo };
+    }
+    const proximoEp = epLancado + 1;
+    const proximaData = new Date(estreiaTime + (proximoEp - 1) * 7 * 86400000);
+    return { epLancado, proximoEp, proximaData, totalEp, diaSemana: estreia.getDay(), dataEstreia, emExibicao: true, jaEstreou: true, finalizada: false };
   }
 
   function formatarData(dt) {
@@ -1056,8 +1055,15 @@
       if (db) {
         await clearDB();
         for (const it of items) await putDB(it);
+        try {
+          const light = items.map(({ imageData, ...rest }) => ({ ...rest, imageData: null }));
+          localStorage.setItem(OLD_KEY, JSON.stringify(light));
+        } catch (e) {
+          console.warn("localStorage quota atingida, mantendo só IndexedDB:", e);
+        }
+      } else {
+        localStorage.setItem(OLD_KEY, JSON.stringify(items));
       }
-      localStorage.setItem(OLD_KEY, JSON.stringify(items));
     } catch (e) {
       console.error(e);
       showToast("⚠️ Erro ao salvar. Dados muito grandes?", 2500);
@@ -1076,40 +1082,96 @@
     catch (e) { console.warn(e); }
   }
 
-  // Busca o backup.json do repositório e adiciona ao acervo do usuário
-  // SOMENTE os itens com IDs que ele ainda não possui e que ainda não
-  // foram "vistos" antes (evita reviver itens que o usuário apagou de propósito).
-  // Nunca sobrescreve ou remove itens existentes.
+  // Mescla o backup.json do repositório:
+  //  1) Adiciona títulos novos (por id) que ainda não existem localmente
+  //     e que nunca foram "vistos" antes (evita reviver itens apagados de propósito).
+  //  2) Completa url/trailer/ost de itens locais que estão VAZIOS,
+  //     sem NUNCA sobrescrever o que o usuário já preencheu.
+  // Uma única ida ao backup.json faz as duas coisas.
   async function mergeNewPublications() {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch(SEED_URL, { cache: "no-store" });
+      const res = await fetch(SEED_URL, { cache: "no-store", signal: controller.signal });
       if (!res.ok) return;
       const backup = await res.json();
       if (!backup || !Array.isArray(backup.items) || !backup.items.length) return;
 
+      const norm = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, " ");
+      const remoteById = new Map();
+      const remoteByName = new Map();
+      for (const raw of backup.items) {
+        const id = String(raw.id || "");
+        if (id) remoteById.set(id, raw);
+        const key = norm(raw.nome);
+        if (key && !remoteByName.has(key)) remoteByName.set(key, raw);
+      }
+
       const existingIds = new Set(items.map(it => String(it.id)));
       const seenSeedIds = getSeenSeedIds();
-      let added = 0;
 
+      let added = 0;
+      let filled = 0;
+      const addedNames = [];
+      const filledNames = [];
+
+      // ---------- 1) ADICIONAR NOVOS ----------
       for (const raw of backup.items) {
         const seedId = String(raw.id || "");
         if (!seedId) continue;
-        const alreadySeen = seenSeedIds.has(seedId);
-        seenSeedIds.add(seedId); // marca como visto independentemente do resultado
-        if (existingIds.has(seedId)) continue;   // usuário já tem esse item
-        if (alreadySeen) continue; // já foi oferecido antes (pode ter sido apagado de propósito)
+        if (existingIds.has(seedId)) { seenSeedIds.add(seedId); continue; }
+        if (seenSeedIds.has(seedId)) continue;
         items.push(normalize(raw));
         existingIds.add(seedId);
+        seenSeedIds.add(seedId);
         added++;
+        addedNames.push(raw.nome || "Sem título");
       }
 
       saveSeenSeedIds(seenSeedIds);
 
-      if (added > 0) {
-        await persist();
-        showToast(`✨ ${added} novo${added > 1 ? 's' : ''} título${added > 1 ? 's' : ''} adicionado${added > 1 ? 's' : ''}!`, 3000);
+      // ---------- 2) COMPLETAR LINKS VAZIOS ----------
+      for (const local of items) {
+        const remote = remoteById.get(String(local.id)) || remoteByName.get(norm(local.nome));
+        if (!remote) continue;
+
+        let touched = false;
+        for (const field of ["url", "trailer", "ost"]) {
+          const localVal = (local[field] || "").trim();
+          const remoteVal = (remote[field] || "").trim();
+          if (!localVal && remoteVal) {
+            local[field] = remoteVal;
+            touched = true;
+          }
+        }
+        if (touched) {
+          local.updatedAt = Date.now();
+          filled++;
+          filledNames.push(local.nome);
+        }
       }
-    } catch (e) { console.warn("Merge de novidades falhou:", e); }
+
+      // ---------- 3) PERSISTIR UMA VEZ ----------
+      if (added > 0 || filled > 0) {
+        await persist();
+      }
+
+      // ---------- 4) TOASTS ----------
+      if (added > 0 && filled > 0) {
+        showToast(`✨ ${added} novo${added > 1 ? 's' : ''} título${added > 1 ? 's' : ''} + 🔗 ${filled} link${filled > 1 ? 's' : ''} atualizado${filled > 1 ? 's' : ''}`, 3400);
+      } else if (added > 0) {
+        showToast(`✨ ${added} novo${added > 1 ? 's' : ''} título${added > 1 ? 's' : ''} adicionado${added > 1 ? 's' : ''}!`, 3000);
+      } else if (filled > 0) {
+        const resumo = filledNames.slice(0, 3).join(", ");
+        const extra = filledNames.length > 3 ? ` +${filledNames.length - 3}` : "";
+        showToast(`🔗 ${filled} link${filled > 1 ? 's' : ''} atualizado${filled > 1 ? 's' : ''}: ${resumo}${extra}`, 3400);
+      }
+    } catch (e) {
+      if (e.name === "AbortError") console.warn("Merge: timeout");
+      else console.warn("Merge falhou:", e);
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async function loadData() {
@@ -1136,9 +1198,11 @@
     }
 
     if (!hadLocalData) {
-      // Sem dados locais ainda: primeira visita, carrega o backup.json inteiro como ponto de partida
       try {
-        const res = await fetch(SEED_URL, { cache: "no-store" });
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch(SEED_URL, { cache: "no-store", signal: ctrl.signal });
+        clearTimeout(t);
         if (res.ok) {
           const backup = await res.json();
           if (backup && Array.isArray(backup.items) && backup.items.length) {
@@ -1149,12 +1213,11 @@
         }
       } catch (e) { console.warn("Seed backup não encontrado ou falhou:", e); }
     } else {
-      // Usuário já tem dados: só soma publicações novas, sem tocar no resto
       await mergeNewPublications();
     }
   }
 
-  function resizeImage(file, maxWidth = 300, maxHeight = 400, callback) {
+  function resizeImage(file, maxWidth = 400, maxHeight = 600, callback) {
     if (!file.type || !file.type.startsWith("image/")) { showToast("⚠ Escolha uma imagem"); return; }
     const img = new Image();
     const reader = new FileReader();
@@ -1174,9 +1237,11 @@
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
-        callback(canvas.toDataURL('image/jpeg', 0.9));
+        callback(canvas.toDataURL('image/jpeg', 0.85));
       };
+      img.onerror = () => showToast("⚠ Não foi possível ler a imagem");
     };
+    reader.onerror = () => showToast("⚠ Erro ao ler arquivo");
     reader.readAsDataURL(file);
   }
 
@@ -1310,12 +1375,9 @@
     if (!container) return;
     const cincoEstrelas = items.filter(i => i.stars === 5);
     if (!cincoEstrelas.length) { container.innerHTML = ""; return; }
-    const shuffled = [...cincoEstrelas];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    const picks = shuffled.slice(0, 8);
+    const picks = [...cincoEstrelas]
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+      .slice(0, 8);
     const html = picks.map(i => {
       const img = i.imageData
         ? `<img src="${escapeHtml(i.imageData)}" loading="lazy" alt="Capa de ${escapeHtml(i.nome)}">`
@@ -1337,7 +1399,6 @@
   function sortItems(list) {
     const sorted = [...list];
     switch (currentSort) {
-      case 'name': sorted.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')); break;
       case 'rating': sorted.sort((a, b) => (b.stars || 0) - (a.stars || 0)); break;
       case 'progress':
         sorted.sort((a, b) => {
@@ -1376,7 +1437,7 @@
     $("imageFile")?.addEventListener("change", e => {
       const file = e.target.files[0];
       if (!file) return;
-      resizeImage(file, 300, 400, (resizedData) => {
+      resizeImage(file, 400, 600, (resizedData) => {
         pendingImageData = resizedData;
         $("imagePreviewArea").innerHTML = `<img class="preview-thumb" src="${pendingImageData}" alt="Prévia da capa"><button type="button" id="clearAddImageBtn" style="background:#d52d00;border:none;border-radius:20px;padding:0.2rem 0.7rem;color:white;cursor:pointer;font-size:0.75rem" aria-label="Remover imagem">✕ Remover</button>`;
         $("clearAddImageBtn")?.addEventListener("click", clearAddImage);
@@ -1589,7 +1650,7 @@
     const porDiaSemana = {};
     for (let dow = 0; dow < 7; dow++) porDiaSemana[dow] = [];
     comEstreia.forEach(item => {
-      const calc = calcularEpisodios(item.dataEstreia, item.totalEp, item.ep);
+      const calc = calcularEpisodios(item.dataEstreia, item.totalEp);
       if (!calc) return;
       const dow = calc.diaSemana;
       if (dow !== null && dow !== undefined) porDiaSemana[dow].push({ item, calc });
@@ -1615,7 +1676,7 @@
         html += `<div class="cal-day-empty">Nenhum lançamento</div>`;
       } else {
         itemsDoDia.forEach(({ item, calc }) => {
-          const poster = item.imageData ? `<img src="${item.imageData}" alt="${escapeHtml(item.nome)}">` : "📺";
+          const poster = item.imageData ? `<img src="${escapeHtml(item.imageData)}" alt="${escapeHtml(item.nome)}">` : "📺";
           let statusTag = "";
           const hojeTime = hoje.getTime();
           const proxTime = calc.proximaData ? new Date(calc.proximaData).getTime() : null;
@@ -1628,9 +1689,13 @@
             else if (diffDias > 7) statusTag = `<span class="cal-item-tag breve">⏳ ${diffDias} dias</span>`;
             else statusTag = `<span class="cal-item-tag" style="background:rgba(255,154,86,0.15);color:var(--les-coral);">✅ E${calc.epLancado} lançado</span>`;
           } else if (!calc.jaEstreou) {
-            const estreiaTime = parseDataLocal(calc.dataEstreia).getTime();
-            const diffDias = Math.floor((estreiaTime - hojeTime) / 86400000);
-            statusTag = `<span class="cal-item-tag" style="background:rgba(239,118,39,0.2);color:var(--les-orange);">🚀 Em ${diffDias} dias</span>`;
+            const estreiaDt = parseDataLocal(calc.dataEstreia);
+            if (estreiaDt && !Number.isNaN(estreiaDt.getTime())) {
+              const diffDias = Math.floor((estreiaDt.getTime() - hojeTime) / 86400000);
+              statusTag = `<span class="cal-item-tag" style="background:rgba(239,118,39,0.2);color:var(--les-orange);">🚀 Em ${diffDias} dia${diffDias === 1 ? '' : 's'}</span>`;
+            } else {
+              statusTag = `<span class="cal-item-tag" style="background:rgba(209,98,164,0.15);color:var(--muted);">⚠ Data inválida</span>`;
+            }
           }
           const meta = `T${item.temp || 1} • E${item.ep || 1}${item.platform ? ' · ' + escapeHtml(item.platform) : ''}`;
           let infoExtra = "";
@@ -1834,7 +1899,7 @@
     $("editImageFile")?.addEventListener("change", e => {
       const file = e.target.files[0];
       if (!file) return;
-      resizeImage(file, 300, 400, (resizedData) => {
+      resizeImage(file, 400, 600, (resizedData) => {
         tempEditImage = resizedData;
         removeEditFlag = false;
         $("editPreviewArea").innerHTML = `<img class="preview-thumb" src="${tempEditImage}" alt="Prévia da nova capa"><button type="button" id="clearEditImageBtn" style="background:#d52d00;border:none;border-radius:20px;padding:0.2rem 0.6rem;color:white;cursor:pointer;font-size:0.75rem" aria-label="Remover imagem">✕</button>`;
@@ -1893,8 +1958,10 @@
     else if (removeEditFlag) item.imageData = null;
     if (item.tipo === "serie") {
       item.temp = Math.max(1, parseInt($("editTemp").value) || 1);
-      item.ep = Math.max(1, parseInt($("editEp").value) || 1);
       item.totalEp = $("editTotalEp").value ? Math.max(1, parseInt($("editTotalEp").value)) : null;
+      let epVal = Math.max(1, parseInt($("editEp").value) || 1);
+      if (item.totalEp && epVal > item.totalEp) epVal = item.totalEp;
+      item.ep = epVal;
       item.dataEstreia = $("editDataEstreia").value || null;
     } else {
       item.temp = null; item.ep = null; item.totalEp = null; item.dataEstreia = null;
@@ -1910,7 +1977,6 @@
     });
   }
 
-  // ========== BACKUP (ATUALIZADO com nome "Diário do CINEÁRIO") ==========
   function exportBackup() {
     const backup = {
       app: "CINEÁRIO",
@@ -1956,7 +2022,8 @@
 
   function resetAllData() {
     if (!confirm(`⚠️ ATENÇÃO: Isso irá EXCLUIR o Diário do CINEÁRIO com TODOS os ${items.length} títulos permanentemente.\n\nDeseja continuar?`)) return;
-    if (prompt('Digite EXCLUIR para confirmar:') !== 'EXCLUIR') { showToast("Cancelado."); return; }
+    const resposta = (prompt('Digite EXCLUIR para confirmar:') || '').trim().toUpperCase();
+    if (resposta !== 'EXCLUIR') { showToast("Cancelado."); return; }
     items = [];
     heroPickId = null;
     (async () => {
