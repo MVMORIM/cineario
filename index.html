@@ -383,7 +383,6 @@
   .poster-type-tag.serie { color: var(--les-pink); text-shadow: 0 0 6px rgba(209,98,164,0.8); }
   .poster-type-tag.filme { color: var(--les-orange); text-shadow: 0 0 6px rgba(239,118,39,0.8); }
   .poster-fav-tag { position: absolute; right: 6px; top: 6px; font-size: 0.8rem; filter: drop-shadow(0 0 6px rgba(209,98,164,0.9)); }
-  .poster-rating-tag { position: absolute; right: 6px; top: 26px; font-size: 0.8rem; filter: drop-shadow(0 0 6px rgba(239,118,39,0.9)); }
   .poster-link-tag {
     position: absolute; top: 6px; right: 6px;
     font-size: 0.6rem; font-weight: 800;
@@ -768,7 +767,7 @@
       <div class="field-group"><label for="nomeInput">📌 Nome</label><input type="text" id="nomeInput" placeholder="Ex: One Punch Man, Barbie..." aria-label="Nome do título"></div>
       <div class="field-row">
         <div class="field-group"><label for="tipoSelect">🎭 Tipo</label><select id="tipoSelect" aria-label="Tipo do título"><option value="serie">📺 Série</option><option value="filme">🎬 Filme</option></select></div>
-        <div class="field-group"><label for="plataformaSelect">📡 Streaming</label><select id="plataformaSelect" aria-label="Plataforma de streaming"><option value="">Nenhuma</option><option>Netflix</option><option>Prime Video</option><option>Disney+</option><option>HBO Max</option><option>Crunchyroll</option><option>Globoplay</option><option>YouTube</option><option>Outro</option></select></div>
+        <div class="field-group"><label for="plataformaSelect">📡 Streaming</label><select id="plataformaSelect" aria-label="Plataforma de streaming"><option value="">Nenhuma</option><option>Netflix</option><option>Prime Video</option><option>Disney+</option><option>HBO Max</option><option>Crunchyroll</option><option>Globoplay</option><option>YouTube</option><option>iQIYI</option><option>GagaOOLala</option><option>Outro</option></select></div>
       </div>
       <div class="field-group"><label for="urlInput">🔗 Link (streaming)</label><input type="url" id="urlInput" placeholder="https://..." aria-label="Link do streaming"></div>
       <div class="field-group"><label for="trailerInput">🎬 Link do Trailer</label><input type="url" id="trailerInput" placeholder="https://youtube.com/..." aria-label="Link do trailer"></div>
@@ -842,7 +841,7 @@
     <div class="field-group"><label for="editNome">Nome</label><input type="text" id="editNome" aria-label="Nome do título"></div>
     <div class="field-row">
       <div class="field-group"><label for="editTipo">Tipo</label><select id="editTipo" aria-label="Tipo do título"><option value="serie">📺 Série</option><option value="filme">🎬 Filme</option></select></div>
-      <div class="field-group"><label for="editPlatform">Streaming</label><select id="editPlatform" aria-label="Plataforma de streaming"><option value="">Nenhuma</option><option>Netflix</option><option>Prime Video</option><option>Disney+</option><option>HBO Max</option><option>Crunchyroll</option><option>Globoplay</option><option>YouTube</option><option>Outro</option></select></div>
+      <div class="field-group"><label for="editPlatform">Streaming</label><select id="editPlatform" aria-label="Plataforma de streaming"><option value="">Nenhuma</option><option>Netflix</option><option>Prime Video</option><option>Disney+</option><option>HBO Max</option><option>Crunchyroll</option><option>Globoplay</option><option>YouTube</option><option>iQIYI</option><option>GagaOOLala</option><option>Outro</option></select></div>
     </div>
     <div class="field-group"><label for="editUrl">🔗 Link (streaming)</label><input type="url" id="editUrl" placeholder="https://..." aria-label="Link do streaming"></div>
     <div class="field-group"><label for="editTrailer">🎬 Link do Trailer</label><input type="url" id="editTrailer" placeholder="https://youtube.com/..." aria-label="Link do trailer"></div>
@@ -1024,6 +1023,37 @@
     });
   }
 
+  // Identifica a plataforma diretamente pelo link de streaming.
+  // O link tem prioridade para manter o cadastro consistente mesmo quando
+  // o campo de plataforma antigo estiver vazio ou como "Outro".
+  function platformFromUrl(url) {
+    const value = String(url || "").trim().toLowerCase();
+    if (!value) return "";
+    if (value.includes("netflix.com")) return "Netflix";
+    if (value.includes("primevideo.com")) return "Prime Video";
+    if (value.includes("youtube.com") || value.includes("youtu.be")) return "YouTube";
+    if (value.includes("iq.com") || value.includes("iqiyi.com")) return "iQIYI";
+    if (value.includes("gagaoolala.com")) return "GagaOOLala";
+    if (value.includes("disneyplus.com")) return "Disney+";
+    if (value.includes("max.com") || value.includes("hbomax.com")) return "HBO Max";
+    if (value.includes("crunchyroll.com")) return "Crunchyroll";
+    if (value.includes("globoplay.com")) return "Globoplay";
+    return "";
+  }
+
+  function canonicalPlatform(i) {
+    const detected = platformFromUrl(i.url);
+    if (detected) return detected;
+    const current = String(i.platform || "").trim();
+    const aliases = {
+      "IqiYi": "iQIYI", "Iqiyi": "iQIYI", "IQIYI": "iQIYI",
+      "Gaga OOLala": "GagaOOLala", "Gagaoolala": "GagaOOLala",
+      "Amazon Prime": "Prime Video", "Prime Video": "Prime Video",
+      "Youtube": "YouTube", "youtube": "YouTube"
+    };
+    return aliases[current] || current;
+  }
+
   function normalize(i) {
     return {
       id: String(i.id || uid()),
@@ -1032,7 +1062,7 @@
       url: i.url || null,
       trailer: i.trailer || null,
       ost: i.ost || null,
-      platform: String(i.platform || ""),
+      platform: canonicalPlatform(i),
       imageData: i.imageData || null,
       assistido: !!i.assistido,
       temp: i.tipo === "serie" ? Math.max(1, parseInt(i.temp) || 1) : null,
@@ -1470,7 +1500,7 @@
     if (tipo === "serie" && !totalEp) { showToast("⚠ Defina o total de episódios para séries"); $("totalEpInput").focus(); return; }
     items.unshift(normalize({
       id: uid(), nome, tipo, url: url || null, trailer: trailer || null, ost: ost || null,
-      platform: $("plataformaSelect").value, imageData: pendingImageData || null, assistido: false,
+      platform: platformFromUrl(url) || $("plataformaSelect").value, imageData: pendingImageData || null, assistido: false,
       temp: tipo === "serie" ? (parseInt($("tempInput").value) || 1) : null,
       ep: tipo === "serie" ? (parseInt($("epInput").value) || 1) : null,
       totalEp: totalEp, dataEstreia: dataEstreia, nota: $("obsInput").value.trim(),
@@ -1515,7 +1545,6 @@
       ? `<img class="poster-cover" src="${escapeHtml(item.imageData)}" loading="lazy" alt="Capa de ${escapeHtml(item.nome)}">`
       : `<div class="poster-placeholder ${item.tipo}">${item.tipo === "serie" ? "📺" : "🎬"}</div>`;
     const favTag = item.favorite ? `<div class="poster-fav-tag">❤️</div>` : "";
-    const ratingTag = item.rating ? `<div class="poster-rating-tag">${item.rating === 'love' ? '🤩' : '🫥'}</div>` : "";
     const linkTag = hasLink ? `<div class="poster-link-tag">🔗 LINK</div>` : "";
     let progressOverlay = "";
     if (item.tipo === "serie" && !isCompleted) {
@@ -1536,7 +1565,7 @@
     return `<div class="poster-card">
       <div class="poster-wrap ${hasLink ? 'has-streaming-link' : ''}" data-id="${item.id}" data-act="detail" role="button" tabindex="0" aria-label="Ver detalhes de ${escapeHtml(item.nome)}">
         <span class="poster-type-tag ${item.tipo}">${item.tipo === "serie" ? "SÉRIE" : "FILME"}</span>
-        ${favTag}${ratingTag}${linkTag}
+        ${favTag}${linkTag}
         ${thumb}
         ${progressOverlay}
       </div>
