@@ -1906,12 +1906,10 @@
     $("detailTemp")?.addEventListener("change", e => {
       item.temp = Math.max(1, parseInt(e.target.value) || 1);
       item.ep = 1;
-      item.updatedAt = Date.now();
       persist().then(() => { openDetailModal(id); renderBiblioteca(); renderDiario(); showToast(`📺 Temporada ${item.temp} selecionada — E1`); });
     });
     $("detailModalBody").querySelectorAll("[data-ep]").forEach(b => b.addEventListener("click", () => {
       item.ep = parseInt(b.dataset.ep, 10);
-      item.updatedAt = Date.now();
       persist().then(() => { openDetailModal(id); renderBiblioteca(); renderDiario(); showToast(`▶ Continuando em T${item.temp || 1} • E${item.ep}`); });
     }));
     $("favToggleBtn").addEventListener("click", () => {
