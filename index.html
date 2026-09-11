@@ -904,6 +904,8 @@
 
   const DB_NAME = "cinearioDB", DB_VERSION = 1, STORE = "items";
   const OLD_KEY = "cinearioItems";
+  const SEED_URL = "cineario_backup_2026-09-09T14-59-14.json";
+  const SEEN_SEED_IDS_KEY = "cinearioSeenSeedIds";
   const STREAK_KEY = "cineario_streak";
   const LASTOPEN_KEY = "cineario_lastOpen";
   const SUPPORT_KEY = "cineario_lastSupportAlert";
@@ -1062,34 +1064,94 @@
     }
   }
 
+  function getSeenSeedIds() {
+    try {
+      const raw = localStorage.getItem(SEEN_SEED_IDS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch (e) { return new Set(); }
+  }
+  function saveSeenSeedIds(idSet) {
+    try { localStorage.setItem(SEEN_SEED_IDS_KEY, JSON.stringify(Array.from(idSet))); }
+    catch (e) { console.warn(e); }
+  }
+
+  // Busca o backup.json do repositório e adiciona ao acervo do usuário
+  // SOMENTE os itens com IDs que ele ainda não possui e que ainda não
+  // foram "vistos" antes (evita reviver itens que o usuário apagou de propósito).
+  // Nunca sobrescreve ou remove itens existentes.
+  async function mergeNewPublications() {
+    try {
+      const res = await fetch(SEED_URL, { cache: "no-store" });
+      if (!res.ok) return;
+      const backup = await res.json();
+      if (!backup || !Array.isArray(backup.items) || !backup.items.length) return;
+
+      const existingIds = new Set(items.map(it => String(it.id)));
+      const seenSeedIds = getSeenSeedIds();
+      let added = 0;
+
+      for (const raw of backup.items) {
+        const seedId = String(raw.id || "");
+        if (!seedId) continue;
+        const alreadySeen = seenSeedIds.has(seedId);
+        seenSeedIds.add(seedId); // marca como visto independentemente do resultado
+        if (existingIds.has(seedId)) continue;   // usuário já tem esse item
+        if (alreadySeen) continue; // já foi oferecido antes (pode ter sido apagado de propósito)
+        items.push(normalize(raw));
+        existingIds.add(seedId);
+        added++;
+      }
+
+      saveSeenSeedIds(seenSeedIds);
+
+      if (added > 0) {
+        await persist();
+        showToast(`✨ ${added} novo${added > 1 ? 's' : ''} título${added > 1 ? 's' : ''} adicionado${added > 1 ? 's' : ''}!`, 3000);
+      }
+    } catch (e) { console.warn("Merge de novidades falhou:", e); }
+  }
+
   async function loadData() {
+    let hadLocalData = false;
     try {
       if (db) {
         items = (await getAllDB()).map(normalize);
-        if (items.length) return;
+        if (items.length) hadLocalData = true;
       }
     } catch (e) { console.warn(e); }
-    const saved = localStorage.getItem(OLD_KEY);
-    if (saved) {
-      try {
-        const arr = JSON.parse(saved);
-        if (Array.isArray(arr)) {
-          items = arr.map(normalize);
-          if (db) await persist();
-          return;
-        }
-      } catch (e) { console.warn(e); }
-    }
-    try {
-      const res = await fetch("cineario_backup_2026-09-09T14-59-14.json");
-      if (res.ok) {
-        const backup = await res.json();
-        if (backup && Array.isArray(backup.items) && backup.items.length) {
-          items = backup.items.map(normalize);
-          await persist();
-        }
+
+    if (!hadLocalData) {
+      const saved = localStorage.getItem(OLD_KEY);
+      if (saved) {
+        try {
+          const arr = JSON.parse(saved);
+          if (Array.isArray(arr)) {
+            items = arr.map(normalize);
+            if (db) await persist();
+            hadLocalData = true;
+          }
+        } catch (e) { console.warn(e); }
       }
-    } catch (e) { console.warn("Seed backup não encontrado ou falhou:", e); }
+    }
+
+    if (!hadLocalData) {
+      // Sem dados locais ainda: primeira visita, carrega o backup.json inteiro como ponto de partida
+      try {
+        const res = await fetch(SEED_URL, { cache: "no-store" });
+        if (res.ok) {
+          const backup = await res.json();
+          if (backup && Array.isArray(backup.items) && backup.items.length) {
+            items = backup.items.map(normalize);
+            await persist();
+            saveSeenSeedIds(new Set(backup.items.map(it => String(it.id || ""))));
+          }
+        }
+      } catch (e) { console.warn("Seed backup não encontrado ou falhou:", e); }
+    } else {
+      // Usuário já tem dados: só soma publicações novas, sem tocar no resto
+      await mergeNewPublications();
+    }
   }
 
   function resizeImage(file, maxWidth = 300, maxHeight = 400, callback) {
