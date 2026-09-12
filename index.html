@@ -1444,9 +1444,7 @@
           if (aIsSerie && !bIsSerie) return -1;
           if (!aIsSerie && bIsSerie) return 1;
           if (aIsSerie && bIsSerie) {
-            const pa = (a.temp || 1) * 1000 + (a.ep || 1);
-            const pb = (b.temp || 1) * 1000 + (b.ep || 1);
-            return pb - pa;
+            return (b.updatedAt || 0) - (a.updatedAt || 0);
           }
           return (b.updatedAt || 0) - (a.updatedAt || 0);
         });
