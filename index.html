@@ -923,8 +923,9 @@
   let heroPickId = null;
   let lastFocus = null;
   let db = null;
+  let dbReady = false;
 
-  const DB_NAME = "cinearioDB", DB_VERSION = 1, STORE = "items";
+  const DB_NAME = "cinearioDB", DB_VERSION = 2, STORE = "items";
   const OLD_KEY = "cinearioItems";
   const SEED_URL = "cineario_backup_2026-09-09T14-59-14.json";
   const SEEN_SEED_IDS_KEY = "cinearioSeenSeedIds";
@@ -966,6 +967,7 @@
 
   function showToast(msg, ms = 1800) {
     const el = $("toast");
+    if (!el) return;
     el.textContent = msg;
     el.classList.add("show");
     clearTimeout(el._t);
@@ -1013,6 +1015,9 @@
     return dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
   }
 
+  // ============================================================
+  // INDEXEDDB — abertura com fallback e log
+  // ============================================================
   function openDB() {
     return new Promise((resolve, reject) => {
       if (!('indexedDB' in window)) { reject(new Error('IndexedDB indisponível')); return; }
@@ -1021,8 +1026,9 @@
         const d = req.result;
         if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE, { keyPath: "id" });
       };
-      req.onsuccess = () => { db = req.result; resolve(db); };
+      req.onsuccess = () => { db = req.result; dbReady = true; resolve(db); };
       req.onerror = () => reject(req.error);
+      req.onblocked = () => reject(new Error('IndexedDB bloqueado'));
     });
   }
   function storeTx(mode) { return db.transaction(STORE, mode).objectStore(STORE); }
@@ -1048,9 +1054,6 @@
     });
   }
 
-  // Identifica a plataforma diretamente pelo link de streaming.
-  // O link tem prioridade para manter o cadastro consistente mesmo quando
-  // o campo de plataforma antigo estiver vazio ou como "Outro".
   function platformFromUrl(url) {
     const value = String(url || "").trim().toLowerCase();
     if (!value) return "";
@@ -1105,26 +1108,36 @@
     };
   }
 
+  // ============================================================
+  // PERSIST — sempre salva nos DOIS lugares (IndexedDB + localStorage)
+  // Estratégia:
+  //   • IndexedDB guarda tudo (incluindo capas em base64)
+  //   • localStorage guarda só os metadados (sem imageData) como fallback
+  //   • Se IndexedDB falhar, localStorage ainda tem os dados essenciais
+  // ============================================================
   async function persist() {
+    // 1) localStorage (fallback leve, sem imagens)
     try {
-      if (db) {
-        await clearDB();
-        for (const it of items) await putDB(it);
-        try {
-          const light = items.map(({ imageData, ...rest }) => ({ ...rest, imageData: null }));
-          localStorage.setItem(OLD_KEY, JSON.stringify(light));
-        } catch (e) {
-          console.warn("localStorage quota atingida, mantendo só IndexedDB:", e);
-        }
-      } else {
-        localStorage.setItem(OLD_KEY, JSON.stringify(items));
-      }
+      const light = items.map(({ imageData, ...rest }) => ({ ...rest, imageData: null }));
+      localStorage.setItem(OLD_KEY, JSON.stringify(light));
     } catch (e) {
-      console.error(e);
-      showToast("⚠️ Erro ao salvar. Dados muito grandes?", 2500);
+      console.warn("localStorage cheio:", e);
+    }
+
+    // 2) IndexedDB (armazenamento principal, com imagens)
+    if (!dbReady || !db) return;
+    try {
+      await clearDB();
+      for (const it of items) await putDB(it);
+    } catch (e) {
+      console.error("IndexedDB falhou:", e);
+      showToast("⚠️ Erro ao salvar no dispositivo. Tente exportar backup.", 3000);
     }
   }
 
+  // ============================================================
+  // SEED / MERGE — só adiciona novos, NUNCA sobrescreve dados locais
+  // ============================================================
   function getSeenSeedIds() {
     try {
       const raw = localStorage.getItem(SEEN_SEED_IDS_KEY);
@@ -1137,12 +1150,6 @@
     catch (e) { console.warn(e); }
   }
 
-  // Mescla o backup.json do repositório:
-  //  1) Adiciona títulos novos (por id) que ainda não existem localmente
-  //     e que nunca foram "vistos" antes (evita reviver itens apagados de propósito).
-  //  2) Completa url/trailer/ost de itens locais que estão VAZIOS,
-  //     sem NUNCA sobrescrever o que o usuário já preencheu.
-  // Uma única ida ao backup.json faz as duas coisas.
   async function mergeNewPublications() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -1167,10 +1174,8 @@
 
       let added = 0;
       let filled = 0;
-      const addedNames = [];
       const filledNames = [];
 
-      // ---------- 1) ADICIONAR NOVOS ----------
       for (const raw of backup.items) {
         const seedId = String(raw.id || "");
         if (!seedId) continue;
@@ -1180,24 +1185,17 @@
         existingIds.add(seedId);
         seenSeedIds.add(seedId);
         added++;
-        addedNames.push(raw.nome || "Sem título");
       }
-
       saveSeenSeedIds(seenSeedIds);
 
-      // ---------- 2) COMPLETAR LINKS VAZIOS ----------
       for (const local of items) {
         const remote = remoteById.get(String(local.id)) || remoteByName.get(norm(local.nome));
         if (!remote) continue;
-
         let touched = false;
         for (const field of ["url", "trailer", "ost"]) {
           const localVal = (local[field] || "").trim();
           const remoteVal = (remote[field] || "").trim();
-          if (!localVal && remoteVal) {
-            local[field] = remoteVal;
-            touched = true;
-          }
+          if (!localVal && remoteVal) { local[field] = remoteVal; touched = true; }
         }
         if (touched) {
           local.updatedAt = Date.now();
@@ -1206,20 +1204,14 @@
         }
       }
 
-      // ---------- 3) PERSISTIR UMA VEZ ----------
-      if (added > 0 || filled > 0) {
-        await persist();
-      }
+      if (added > 0 || filled > 0) await persist();
 
-      // ---------- 4) TOASTS ----------
-      if (added > 0 && filled > 0) {
-        showToast(`✨ ${added} novo${added > 1 ? 's' : ''} título${added > 1 ? 's' : ''} + 🔗 ${filled} link${filled > 1 ? 's' : ''} atualizado${filled > 1 ? 's' : ''}`, 3400);
-      } else if (added > 0) {
-        showToast(`✨ ${added} novo${added > 1 ? 's' : ''} título${added > 1 ? 's' : ''} adicionado${added > 1 ? 's' : ''}!`, 3000);
-      } else if (filled > 0) {
+      if (added > 0 && filled > 0) showToast(`✨ ${added} novo(s) + 🔗 ${filled} link(s)`, 3400);
+      else if (added > 0) showToast(`✨ ${added} novo(s) título(s)!`, 3000);
+      else if (filled > 0) {
         const resumo = filledNames.slice(0, 3).join(", ");
         const extra = filledNames.length > 3 ? ` +${filledNames.length - 3}` : "";
-        showToast(`🔗 ${filled} link${filled > 1 ? 's' : ''} atualizado${filled > 1 ? 's' : ''}: ${resumo}${extra}`, 3400);
+        showToast(`🔗 ${filled} link(s): ${resumo}${extra}`, 3400);
       }
     } catch (e) {
       if (e.name === "AbortError") console.warn("Merge: timeout");
@@ -1229,30 +1221,42 @@
     }
   }
 
+  // ============================================================
+  // LOAD — tenta IndexedDB → localStorage → seed remoto (só se vazio)
+  // NUNCA sobrescreve dados locais existentes
+  // ============================================================
   async function loadData() {
-    let hadLocalData = false;
-    try {
-      if (db) {
-        items = (await getAllDB()).map(normalize);
-        if (items.length) hadLocalData = true;
-      }
-    } catch (e) { console.warn(e); }
+    let loaded = false;
 
-    if (!hadLocalData) {
+    // 1) IndexedDB
+    if (dbReady && db) {
+      try {
+        const fromDB = (await getAllDB()).map(normalize);
+        if (fromDB.length) {
+          items = fromDB;
+          loaded = true;
+        }
+      } catch (e) { console.warn("IndexedDB read falhou:", e); }
+    }
+
+    // 2) localStorage (fallback)
+    if (!loaded) {
       const saved = localStorage.getItem(OLD_KEY);
       if (saved) {
         try {
           const arr = JSON.parse(saved);
-          if (Array.isArray(arr)) {
+          if (Array.isArray(arr) && arr.length) {
             items = arr.map(normalize);
-            if (db) await persist();
-            hadLocalData = true;
+            loaded = true;
+            // Regrava no IndexedDB para sincronizar
+            if (dbReady && db) await persist();
           }
-        } catch (e) { console.warn(e); }
+        } catch (e) { console.warn("localStorage parse falhou:", e); }
       }
     }
 
-    if (!hadLocalData) {
+    // 3) Seed remoto (só se NADA foi encontrado localmente)
+    if (!loaded) {
       try {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 5000);
@@ -1266,8 +1270,9 @@
             saveSeenSeedIds(new Set(backup.items.map(it => String(it.id || ""))));
           }
         }
-      } catch (e) { console.warn("Seed backup não encontrado ou falhou:", e); }
+      } catch (e) { console.warn("Seed backup indisponível:", e); }
     } else {
+      // Já temos dados locais → só mescla novidades (sem sobrescrever)
       await mergeNewPublications();
     }
   }
@@ -1503,7 +1508,7 @@
     $("imageFile").value = "";
   }
 
-  function addNewItem() {
+  async function addNewItem() {
     const nome = $("nomeInput").value.trim();
     const nomeInput = $("nomeInput");
     nomeInput.classList.remove("error");
@@ -1527,19 +1532,18 @@
       totalEp: totalEp, dataEstreia: dataEstreia, nota: $("obsInput").value.trim(),
       rating: null, stars: 0, favorite: false, category: "", watchedAt: null, createdAt: Date.now(), updatedAt: Date.now()
     }));
-    persist().then(() => {
-      $("urlInput").value = ""; $("trailerInput").value = ""; $("ostInput").value = ""; $("nomeInput").value = "";
-      $("obsInput").value = ""; $("tipoSelect").value = "serie"; $("plataformaSelect").value = "";
-      $("tempInput").value = 1; $("epInput").value = 1; $("dataEstreiaInput").value = ""; $("totalEpInput").value = "";
-      clearAddImage();
-      const btn = $("addBtn");
-      const original = btn.textContent;
-      btn.textContent = "✓ Adicionado!";
-      btn.classList.add("success");
-      setTimeout(() => { btn.textContent = original; btn.classList.remove("success"); }, 1400);
-      showToast(`✓ "${nome}" adicionado!`);
-      switchTab("biblioteca");
-    });
+    await persist();
+    $("urlInput").value = ""; $("trailerInput").value = ""; $("ostInput").value = ""; $("nomeInput").value = "";
+    $("obsInput").value = ""; $("tipoSelect").value = "serie"; $("plataformaSelect").value = "";
+    $("tempInput").value = 1; $("epInput").value = 1; $("dataEstreiaInput").value = ""; $("totalEpInput").value = "";
+    clearAddImage();
+    const btn = $("addBtn");
+    const original = btn.textContent;
+    btn.textContent = "✓ Adicionado!";
+    btn.classList.add("success");
+    setTimeout(() => { btn.textContent = original; btn.classList.remove("success"); }, 1400);
+    showToast(`✓ "${nome}" adicionado!`);
+    switchTab("biblioteca");
   }
 
   function renderBiblioteca() {
@@ -1647,46 +1651,43 @@
       cat = b.dataset.cat;
     }));
     $("cancelFinishBtn").addEventListener("click", closeFinishModal);
-    $("confirmFinishBtn").addEventListener("click", () => {
+    $("confirmFinishBtn").addEventListener("click", async () => {
       const custom = $("finishCatInput").value.trim();
       item.assistido = true;
       item.watchedAt = new Date().toISOString();
       item.category = custom || cat;
       item.favorite = item.favorite || cat === "favoritos";
       item.updatedAt = Date.now();
-      persist().then(() => {
-        closeFinishModal();
-        renderBiblioteca();
-        renderDiario();
-        showToast(`🎉 "${item.nome}" finalizado e enviado para ${custom || cat || "Diário"}!`);
-      });
+      await persist();
+      closeFinishModal();
+      renderBiblioteca();
+      renderDiario();
+      showToast(`🎉 "${item.nome}" finalizado e enviado para ${custom || cat || "Diário"}!`);
     });
   }
   function closeFinishModal() { $("finishModal").classList.add("hidden"); }
 
-  function desfazerFinalizado(id) {
+  async function desfazerFinalizado(id) {
     const item = items.find(i => i.id === id);
     if (!item) return;
     item.assistido = false;
     item.watchedAt = null;
     item.updatedAt = Date.now();
-    persist().then(() => {
-      renderBiblioteca();
-      renderDiario();
-      showToast("↩ Desfeito.");
-    });
+    await persist();
+    renderBiblioteca();
+    renderDiario();
+    showToast("↩ Desfeito.");
   }
 
-  function deleteItem(id) {
+  async function deleteItem(id) {
     const item = items.find(i => i.id === id);
     if (!item) return;
     if (!confirm(`Remover "${item.nome}"?`)) return;
     items = items.filter(i => i.id !== id);
-    persist().then(() => {
-      renderBiblioteca();
-      renderDiario();
-      showToast("🗑 Removido.");
-    });
+    await persist();
+    renderBiblioteca();
+    renderDiario();
+    showToast("🗑 Removido.");
   }
 
   function renderCalendario() {
@@ -1910,27 +1911,43 @@
     const stars = $("detailModalBody").querySelectorAll("[data-star]");
     stars.forEach(b => {
       b.textContent = parseInt(b.dataset.star, 10) <= item.stars ? "★" : "☆";
-      b.addEventListener("click", () => {
+      b.addEventListener("click", async () => {
         item.stars = item.stars === parseInt(b.dataset.star, 10) ? 0 : parseInt(b.dataset.star, 10);
         item.updatedAt = Date.now();
-        persist().then(() => { openDetailModal(id); renderBiblioteca(); renderDiario(); showToast(`⭐ ${item.stars}/5`); });
+        await persist();
+        openDetailModal(id);
+        renderBiblioteca();
+        renderDiario();
+        showToast(`⭐ ${item.stars}/5`);
       });
     });
-    $("detailTemp")?.addEventListener("change", e => {
+    $("detailTemp")?.addEventListener("change", async e => {
       item.temp = Math.max(1, parseInt(e.target.value) || 1);
       item.ep = 1;
       item.progressUpdatedAt = Date.now();
-      persist().then(() => { openDetailModal(id); renderBiblioteca(); renderDiario(); showToast(`📺 Temporada ${item.temp} selecionada — E1`); });
+      await persist();
+      openDetailModal(id);
+      renderBiblioteca();
+      renderDiario();
+      showToast(`📺 Temporada ${item.temp} selecionada — E1`);
     });
-    $("detailModalBody").querySelectorAll("[data-ep]").forEach(b => b.addEventListener("click", () => {
+    $("detailModalBody").querySelectorAll("[data-ep]").forEach(b => b.addEventListener("click", async () => {
       item.ep = parseInt(b.dataset.ep, 10);
       item.progressUpdatedAt = Date.now();
-      persist().then(() => { openDetailModal(id); renderBiblioteca(); renderDiario(); showToast(`▶ Continuando em T${item.temp || 1} • E${item.ep}`); });
+      await persist();
+      openDetailModal(id);
+      renderBiblioteca();
+      renderDiario();
+      showToast(`▶ Continuando em T${item.temp || 1} • E${item.ep}`);
     }));
-    $("favToggleBtn").addEventListener("click", () => {
+    $("favToggleBtn").addEventListener("click", async () => {
       item.favorite = !item.favorite;
       item.updatedAt = Date.now();
-      persist().then(() => { openDetailModal(id); renderBiblioteca(); renderSuggestions(); showToast(item.favorite ? "❤️ Favoritado" : "💔 Removido dos favoritos"); });
+      await persist();
+      openDetailModal(id);
+      renderBiblioteca();
+      renderSuggestions();
+      showToast(item.favorite ? "❤️ Favoritado" : "💔 Removido dos favoritos");
     });
     $("detailPlayBtn")?.addEventListener("click", () => { window.open(item.url, "_blank", "noopener"); });
     $("detailEditBtn").addEventListener("click", () => { closeDetailModal(); openEditModal(id); });
@@ -1993,7 +2010,7 @@
   }
   function closeModal() { $("editModal").classList.add("hidden"); editingId = null; }
 
-  function saveEditModal() {
+  async function saveEditModal() {
     const item = items.find(i => i.id === editingId);
     if (!item) return;
     const nome = $("editNome").value.trim();
@@ -2018,13 +2035,12 @@
     }
     item.nota = $("editObs").value;
     item.updatedAt = Date.now();
-    persist().then(() => {
-      renderBiblioteca();
-      renderDiario();
-      renderCalendario();
-      showToast("✓ Salvo!");
-      closeModal();
-    });
+    await persist();
+    renderBiblioteca();
+    renderDiario();
+    renderCalendario();
+    showToast("✓ Salvo!");
+    closeModal();
   }
 
   function exportBackup() {
@@ -2050,19 +2066,18 @@
 
   function importBackup(file) {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const backup = JSON.parse(e.target.result);
         if (!backup || !Array.isArray(backup.items)) throw new Error("Formato inválido");
         const incoming = backup.items.map(normalize);
         if (!confirm(`📥 Baixar o Diário do CINEÁRIO?\n\nIsso irá importar ${incoming.length} títulos e substituir a biblioteca atual. Deseja continuar?`)) return;
         items = incoming;
-        persist().then(() => {
-          renderBiblioteca();
-          renderDiario();
-          showToast("✅ Diário do CINEÁRIO importado! " + items.length + " títulos restaurados.", 2800);
-          switchTab("biblioteca");
-        });
+        await persist();
+        renderBiblioteca();
+        renderDiario();
+        showToast("✅ Diário do CINEÁRIO importado! " + items.length + " títulos restaurados.", 2800);
+        switchTab("biblioteca");
       } catch (err) {
         showToast("❌ Arquivo inválido ou corrompido", 2000);
       }
@@ -2077,8 +2092,9 @@
     items = [];
     heroPickId = null;
     (async () => {
-      if (db) { try { await clearDB(); } catch (e) { console.warn(e); } }
+      if (dbReady && db) { try { await clearDB(); } catch (e) { console.warn(e); } }
       localStorage.removeItem(OLD_KEY);
+      localStorage.removeItem(SEEN_SEED_IDS_KEY);
       renderBiblioteca();
       renderDiario();
       showToast("🗑️ Diário do CINEÁRIO excluído.", 2000);
@@ -2156,8 +2172,15 @@
 
   async function init() {
     initTheme();
-    try { await openDB(); } catch (e) { console.warn("IndexedDB indisponível, usando localStorage:", e); }
+    try {
+      await openDB();
+      console.log("✅ IndexedDB pronto");
+    } catch (e) {
+      console.warn("⚠️ IndexedDB indisponível, usando apenas localStorage:", e);
+      dbReady = false;
+    }
     await loadData();
+    console.log(`📚 ${items.length} título(s) carregado(s)`);
     setupImageUpload();
     setupEditImageUpload();
     bindEvents();
