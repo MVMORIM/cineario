@@ -302,6 +302,20 @@
   .fab-add:active { transform: scale(0.9); }
   .fab-add.hidden { display: none !important; }
 
+  .fab-telegram {
+    position: fixed; right: 1.3rem; bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #2AABEE, #229ED9);
+    border: none; color: #fff; font-size: 1.5rem;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 16px rgba(42, 171, 238, 0.6), 0 6px 18px rgba(34, 158, 217, 0.35);
+    cursor: pointer; z-index: 90; transition: transform 0.15s;
+    text-decoration: none;
+  }
+  .fab-telegram:active { transform: scale(0.9); }
+  .fab-telegram svg { width: 26px; height: 26px; display: block; }
+  .fab-telegram.hidden { display: none !important; }
+
   .filter-bar {
     background: var(--surface);
     backdrop-filter: blur(20px);
@@ -885,6 +899,9 @@
   </div>
 </div>
 
+<a class="fab-telegram" id="fabTelegramBtn" href="https://t.me/+FMM16BQIC444NWQx" target="_blank" rel="noopener noreferrer" title="Entrar no Telegram" aria-label="Entrar no grupo do Telegram">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.05 3.16 2.83 10.4c-1.24.5-1.24 1.2-.23 1.5l4.67 1.46 1.8 5.55c.22.6.36.85.75.85.32 0 .46-.14.65-.32l1.7-1.65 3.5 2.6c.8.44 1.36.2 1.57-.75l2.84-13.4c.3-1.16-.44-1.68-1.44-1.28zM8.6 13.4l9.4-5.9c.44-.27.85-.12.52.18L10.6 15c-.3.28-.6.4-1.1.46l-.9-2.06z"/></svg>
+</a>
 <button class="fab-add" id="fabAddBtn" title="Adicionar título" aria-label="Adicionar novo título">+</button>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1502,8 +1519,6 @@
     const ost = $("ostInput").value.trim();
     const dataEstreia = tipo === "serie" ? ($("dataEstreiaInput").value || null) : null;
     const totalEp = tipo === "serie" ? (parseInt($("totalEpInput").value) || null) : null;
-    if (tipo === "serie" && !dataEstreia) { showToast("⚠ Defina a data do 1º episódio para séries"); $("dataEstreiaInput").focus(); return; }
-    if (tipo === "serie" && !totalEp) { showToast("⚠ Defina o total de episódios para séries"); $("totalEpInput").focus(); return; }
     items.unshift(normalize({
       id: uid(), nome, tipo, url: url || null, trailer: trailer || null, ost: ost || null,
       platform: platformFromUrl(url) || $("plataformaSelect").value, imageData: pendingImageData || null, assistido: false,
@@ -1688,7 +1703,7 @@
       const calc = calcularEpisodios(item.dataEstreia, item.totalEp);
       if (!calc) return;
       const dow = calc.diaSemana;
-      if (dow !== null && dow !== undefined) porDiaSemana[dow].push({ item, calc });
+      if (dow !== null && dow !== undefined && !calc.finalizada) porDiaSemana[dow].push({ item, calc });
     });
     let html = "";
     for (let dow = 0; dow < 7; dow++) {
@@ -2085,6 +2100,7 @@
       renderStreak();
     }
     $("fabAddBtn").classList.toggle("hidden", name === "adicionar");
+    $("fabTelegramBtn")?.classList.toggle("hidden", name === "adicionar");
     if (name === "adicionar") setTimeout(() => $("nomeInput")?.focus(), 150);
   }
 
