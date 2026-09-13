@@ -1015,9 +1015,6 @@
     return dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
   }
 
-  // ============================================================
-  // INDEXEDDB — abertura com fallback e log
-  // ============================================================
   function openDB() {
     return new Promise((resolve, reject) => {
       if (!('indexedDB' in window)) { reject(new Error('IndexedDB indisponível')); return; }
@@ -1082,6 +1079,7 @@
     return aliases[current] || current;
   }
 
+  // ⚠️ progressUpdatedAt agora é preservado
   function normalize(i) {
     return {
       id: String(i.id || uid()),
@@ -1103,20 +1101,13 @@
       favorite: !!i.favorite,
       category: String(i.category || ""),
       watchedAt: i.watchedAt || null,
+      progressUpdatedAt: i.progressUpdatedAt || null,
       createdAt: i.createdAt || Date.now(),
       updatedAt: i.updatedAt || Date.now()
     };
   }
 
-  // ============================================================
-  // PERSIST — sempre salva nos DOIS lugares (IndexedDB + localStorage)
-  // Estratégia:
-  //   • IndexedDB guarda tudo (incluindo capas em base64)
-  //   • localStorage guarda só os metadados (sem imageData) como fallback
-  //   • Se IndexedDB falhar, localStorage ainda tem os dados essenciais
-  // ============================================================
   async function persist() {
-    // 1) localStorage (fallback leve, sem imagens)
     try {
       const light = items.map(({ imageData, ...rest }) => ({ ...rest, imageData: null }));
       localStorage.setItem(OLD_KEY, JSON.stringify(light));
@@ -1124,7 +1115,6 @@
       console.warn("localStorage cheio:", e);
     }
 
-    // 2) IndexedDB (armazenamento principal, com imagens)
     if (!dbReady || !db) return;
     try {
       await clearDB();
@@ -1135,9 +1125,6 @@
     }
   }
 
-  // ============================================================
-  // SEED / MERGE — só adiciona novos, NUNCA sobrescreve dados locais
-  // ============================================================
   function getSeenSeedIds() {
     try {
       const raw = localStorage.getItem(SEEN_SEED_IDS_KEY);
@@ -1221,14 +1208,9 @@
     }
   }
 
-  // ============================================================
-  // LOAD — tenta IndexedDB → localStorage → seed remoto (só se vazio)
-  // NUNCA sobrescreve dados locais existentes
-  // ============================================================
   async function loadData() {
     let loaded = false;
 
-    // 1) IndexedDB
     if (dbReady && db) {
       try {
         const fromDB = (await getAllDB()).map(normalize);
@@ -1239,7 +1221,6 @@
       } catch (e) { console.warn("IndexedDB read falhou:", e); }
     }
 
-    // 2) localStorage (fallback)
     if (!loaded) {
       const saved = localStorage.getItem(OLD_KEY);
       if (saved) {
@@ -1248,14 +1229,12 @@
           if (Array.isArray(arr) && arr.length) {
             items = arr.map(normalize);
             loaded = true;
-            // Regrava no IndexedDB para sincronizar
             if (dbReady && db) await persist();
           }
         } catch (e) { console.warn("localStorage parse falhou:", e); }
       }
     }
 
-    // 3) Seed remoto (só se NADA foi encontrado localmente)
     if (!loaded) {
       try {
         const ctrl = new AbortController();
@@ -1272,7 +1251,6 @@
         }
       } catch (e) { console.warn("Seed backup indisponível:", e); }
     } else {
-      // Já temos dados locais → só mescla novidades (sem sobrescrever)
       await mergeNewPublications();
     }
   }
@@ -1530,7 +1508,9 @@
       temp: tipo === "serie" ? (parseInt($("tempInput").value) || 1) : null,
       ep: tipo === "serie" ? (parseInt($("epInput").value) || 1) : null,
       totalEp: totalEp, dataEstreia: dataEstreia, nota: $("obsInput").value.trim(),
-      rating: null, stars: 0, favorite: false, category: "", watchedAt: null, createdAt: Date.now(), updatedAt: Date.now()
+      rating: null, stars: 0, favorite: false, category: "", watchedAt: null,
+      progressUpdatedAt: null,
+      createdAt: Date.now(), updatedAt: Date.now()
     }));
     await persist();
     $("urlInput").value = ""; $("trailerInput").value = ""; $("ostInput").value = ""; $("nomeInput").value = "";
@@ -2024,11 +2004,15 @@
     if (tempEditImage) item.imageData = tempEditImage;
     else if (removeEditFlag) item.imageData = null;
     if (item.tipo === "serie") {
-      item.temp = Math.max(1, parseInt($("editTemp").value) || 1);
+      const novoTemp = Math.max(1, parseInt($("editTemp").value) || 1);
       item.totalEp = $("editTotalEp").value ? Math.max(1, parseInt($("editTotalEp").value)) : null;
-      let epVal = Math.max(1, parseInt($("editEp").value) || 1);
-      if (item.totalEp && epVal > item.totalEp) epVal = item.totalEp;
-      item.ep = epVal;
+      let novoEp = Math.max(1, parseInt($("editEp").value) || 1);
+      if (item.totalEp && novoEp > item.totalEp) novoEp = item.totalEp;
+      if (item.temp !== novoTemp || item.ep !== novoEp) {
+        item.progressUpdatedAt = Date.now();
+      }
+      item.temp = novoTemp;
+      item.ep = novoEp;
       item.dataEstreia = $("editDataEstreia").value || null;
     } else {
       item.temp = null; item.ep = null; item.totalEp = null; item.dataEstreia = null;
