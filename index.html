@@ -303,7 +303,7 @@
   .fab-add.hidden { display: none !important; }
 
   .fab-telegram {
-    position: fixed; right: 1.3rem; bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+    position: fixed; right: 1.3rem; bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px));
     width: 52px; height: 52px; border-radius: 50%;
     background: linear-gradient(135deg, #2AABEE, #229ED9);
     border: none; color: #fff; font-size: 1.5rem;
@@ -315,6 +315,28 @@
   .fab-telegram:active { transform: scale(0.9); }
   .fab-telegram svg { width: 26px; height: 26px; display: block; }
   .fab-telegram.hidden { display: none !important; }
+
+  .fab-notify {
+    position: fixed; right: 1.2rem; bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(209, 98, 164, 0.15);
+    border: 0.5px solid var(--border); color: var(--text); font-size: 1.4rem;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--glow-pink);
+    cursor: pointer; z-index: 90; transition: transform 0.15s;
+  }
+  .fab-notify:active { transform: scale(0.9); }
+  .fab-notify.hidden { display: none !important; }
+  .fab-notify .notify-badge {
+    position: absolute; top: -2px; right: -2px;
+    background: var(--les-orange-dark); color: #fff;
+    font-size: 0.6rem; font-weight: 700; line-height: 1;
+    min-width: 17px; height: 17px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px; box-shadow: 0 0 6px rgba(213,45,0,0.7);
+    border: 2px solid var(--bg);
+  }
+  .fab-notify .notify-badge.hidden { display: none !important; }
 
   .filter-bar {
     background: var(--surface);
@@ -549,16 +571,9 @@
   .dash-insight b { color: var(--les-coral); text-shadow: 0 0 6px rgba(255,154,86,0.6); }
   .dash-insight .dash-insight-icon { font-size: 1.1rem; flex-shrink: 0; }
 
-  .achievements-wrap { margin-bottom: 1rem; }
-  .achievements-wrap h3 { font-size: 0.68rem; color: var(--les-coral); font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.02em; text-shadow: 0 0 8px rgba(255,154,86,0.6); }
-  .achievements { display: flex; gap: 0.5rem; overflow-x: auto; scrollbar-width: none; }
-  .achievements::-webkit-scrollbar { display: none; }
-  .achievement { min-width: 80px; text-align: center; background: rgba(209, 98, 164, 0.12); border-radius: 14px; padding: 0.5rem; font-size: 0.54rem; color: var(--muted); border: 0.5px solid var(--border); }
-  .achievement b { display: block; font-size: 1.05rem; margin-bottom: 0.2rem; }
-  .achievement.done { color: var(--text2); background: linear-gradient(135deg, rgba(239, 118, 39, 0.15), rgba(209, 98, 164, 0.1)); box-shadow: var(--glow-orange); border-color: rgba(239,118,39,0.4); }
+  .diary-card-label { font-size: 0.68rem; color: var(--les-coral); font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.02em; text-shadow: 0 0 8px rgba(255,154,86,0.6); }
 
   .diary-card { background: var(--surface); backdrop-filter: blur(20px); border-radius: 22px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 0 20px rgba(163, 2, 98, 0.2); }
-  .diary-card-label { font-size: 0.68rem; color: var(--les-coral); font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.02em; text-shadow: 0 0 8px rgba(255,154,86,0.6); }
 
   .cal-legend { font-size: 0.72rem; color: var(--muted); font-weight: 600; margin-bottom: 0.8rem; text-align: center; }
   .cal-week { display: flex; flex-direction: column; gap: 0.7rem; }
@@ -597,25 +612,25 @@
   .cal-item-tag.breve { background: rgba(239, 118, 39, 0.2); color: var(--les-orange); border: 0.5px solid rgba(239,118,39,0.4); }
   .cal-day-empty { font-size: 0.68rem; color: var(--muted); padding: 0.3rem 0; }
 
-  .diary-header {
-    display: grid; grid-template-columns: 60px 1fr 60px 110px; padding: 0.7rem 0.9rem;
-    background: rgba(209, 98, 164, 0.1); font-size: 0.62rem; font-weight: 600; color: var(--muted);
-    border-bottom: 0.5px solid var(--border);
-  }
   .diary-row {
-    display: grid; grid-template-columns: 60px 1fr 60px 110px; align-items: center;
-    padding: 0.65rem 0.9rem; border-bottom: 0.5px solid var(--border); gap: 0.4rem;
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.75rem 0.9rem; border-bottom: 0.5px solid var(--border);
   }
   .diary-row:last-child { border-bottom: none; }
-  .diary-date { font-size: 0.65rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .diary-title-cell { font-weight: 600; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .diary-actions-cell { display: flex; gap: 0.35rem; justify-content: flex-end; }
+  .diary-poster { width: 40px; height: 56px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: var(--card-bg); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+  .diary-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .diary-info { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+  .diary-title-cell { font-weight: 650; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .diary-sub { display: flex; align-items: center; gap: 0.5rem; font-size: 0.68rem; color: var(--muted); }
+  .diary-date { font-variant-numeric: tabular-nums; }
+  .diary-rating { font-size: 0.78rem; }
+  .diary-actions-cell { display: flex; gap: 0.3rem; flex-shrink: 0; }
   .undo-btn, .remove-diary-btn, .info-diary-btn {
     background: rgba(209, 98, 164, 0.15); border: 0.5px solid var(--border);
-    padding: 0.6rem 0.8rem;
-    border-radius: 20px; font-size: 0.9rem; font-weight: 700;
+    padding: 0.5rem;
+    border-radius: 20px; font-size: 0.85rem; font-weight: 700;
     color: var(--les-pink); cursor: pointer;
-    min-width: 44px; min-height: 44px;
+    min-width: 40px; min-height: 40px;
     display: flex; align-items: center; justify-content: center;
     transition: 0.15s;
   }
@@ -738,7 +753,8 @@
     .support-text { font-size: 0.72rem; }
     .stats-group { gap: 0.3rem; padding: 0.5rem 0.8rem; }
     .stat-number { font-size: 1.2rem; }
-    .diary-header, .diary-row { grid-template-columns: 50px 1fr 50px 100px; padding: 0.5rem 0.6rem; }
+    .diary-row { padding: 0.6rem 0.7rem; gap: 0.55rem; }
+    .diary-poster { width: 34px; height: 48px; }
   }
 </style>
 </head>
@@ -751,7 +767,6 @@
   </div>
   <nav class="tab-bar-ios" role="tablist" aria-label="Navegação principal">
     <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true" aria-controls="view-biblioteca">Início</button>
-    <button class="tab" data-tab="calendario" role="tab" aria-selected="false" aria-controls="view-calendario" aria-label="Calendário">📅</button>
     <button class="tab" data-tab="diario" role="tab" aria-selected="false" aria-controls="view-diario">Diário</button>
     <button class="tab" data-tab="backup" role="tab" aria-selected="false" aria-controls="view-backup" aria-label="Configurações e backup">⚙️</button>
   </nav>
@@ -819,10 +834,8 @@
     <div id="dashHero"></div>
     <div class="stats-group" id="statsMini"></div>
     <div id="dashInsight"></div>
-    <div class="achievements-wrap"><h3>🏆 Conquistas</h3><div class="achievements" id="achievements"></div></div>
     <div class="diary-card-label">📖 Últimos finalizados</div>
     <div class="diary-card">
-      <div class="diary-header"><span>📅 Data</span><span>Título</span><span>⭐</span><span style="text-align:right">Ação</span></div>
       <div id="diaryList"></div>
     </div>
     <div class="empty-state hidden" id="emptyDiaryMsg"><div style="font-size:2rem;margin-bottom:0.5rem">📖</div>Diário vazio.<br>Finalize títulos na Biblioteca.</div>
@@ -902,6 +915,7 @@
 <a class="fab-telegram" id="fabTelegramBtn" href="https://t.me/+FMM16BQIC444NWQx" target="_blank" rel="noopener noreferrer" title="Entrar no Telegram" aria-label="Entrar no grupo do Telegram">
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.05 3.16 2.83 10.4c-1.24.5-1.24 1.2-.23 1.5l4.67 1.46 1.8 5.55c.22.6.36.85.75.85.32 0 .46-.14.65-.32l1.7-1.65 3.5 2.6c.8.44 1.36.2 1.57-.75l2.84-13.4c.3-1.16-.44-1.68-1.44-1.28zM8.6 13.4l9.4-5.9c.44-.27.85-.12.52.18L10.6 15c-.3.28-.6.4-1.1.46l-.9-2.06z"/></svg>
 </a>
+<button class="fab-notify" id="calendarNotifyBtn" title="Próximos lançamentos" aria-label="Ver próximos lançamentos">🔔<span class="notify-badge hidden" id="calendarNotifyBadge">0</span></button>
 <button class="fab-add" id="fabAddBtn" title="Adicionar título" aria-label="Adicionar novo título">+</button>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1013,6 +1027,38 @@
     dt = parseDataLocal(dt);
     if (!dt || Number.isNaN(dt.getTime())) return "";
     return dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  function getUpcomingReleases() {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const hojeTime = hoje.getTime();
+    const comEstreia = items.filter(i => i.tipo === "serie" && !i.assistido && i.dataEstreia && i.totalEp && i.totalEp > 0);
+    const proximos = [];
+    comEstreia.forEach(item => {
+      const calc = calcularEpisodios(item.dataEstreia, item.totalEp);
+      if (!calc || calc.finalizada) return;
+      let dataAlvo = null, diffDias = null;
+      if (calc.jaEstreou && calc.proximaData) {
+        dataAlvo = calc.proximaData;
+        diffDias = Math.floor((new Date(dataAlvo).getTime() - hojeTime) / 86400000);
+      } else if (!calc.jaEstreou) {
+        dataAlvo = parseDataLocal(calc.dataEstreia);
+        if (dataAlvo) diffDias = Math.floor((dataAlvo.getTime() - hojeTime) / 86400000);
+      }
+      if (dataAlvo && diffDias !== null && diffDias >= 0 && diffDias <= 7) {
+        proximos.push({ nome: item.nome, diffDias });
+      }
+    });
+    proximos.sort((a, b) => a.diffDias - b.diffDias);
+    return proximos;
+  }
+
+  function updateNotifyBadge() {
+    const badge = $("calendarNotifyBadge");
+    if (!badge) return;
+    const count = getUpcomingReleases().length;
+    badge.textContent = count > 9 ? "9+" : String(count);
+    badge.classList.toggle("hidden", count === 0);
   }
 
   function openDB() {
@@ -1527,6 +1573,7 @@
   }
 
   function renderBiblioteca() {
+    updateNotifyBadge();
     const grid = $("bibliotecaGrid");
     const emptyMsg = $("emptyLibraryMsg");
     const lista = getFilteredItems();
@@ -1746,7 +1793,7 @@
       html += `</div></div>`;
     }
     grid.innerHTML = html;
-    grid.querySelectorAll(".cal-item").forEach(el => el.addEventListener("click", () => openEditModal(el.dataset.id)));
+    grid.querySelectorAll(".cal-item").forEach(el => el.addEventListener("click", () => openDetailModal(el.dataset.id)));
   }
 
   function renderDiario() {
@@ -1793,7 +1840,6 @@
     else if (favCount > 0 && pendentes > 0) { insightIcon = "❤️"; insightText = `Você tem <b>${favCount} favorito${favCount === 1 ? '' : 's'}</b> — que tal continuar um deles hoje?`; }
     else if (pendentes > 0) { insightIcon = "🎯"; insightText = `Você tem <b>${pendentes}</b> título${pendentes === 1 ? '' : 's'} esperando para começar.`; }
     $("dashInsight").innerHTML = `<div class="dash-insight"><span class="dash-insight-icon">${insightIcon}</span><span>${insightText}</span></div>`;
-    renderAchievements();
 
     const container = $("diaryList");
     const emptyEl = $("emptyDiaryMsg");
@@ -1801,11 +1847,14 @@
     emptyEl.classList.add("hidden");
     container.innerHTML = assistidos.map(item => {
       const d = item.watchedAt ? new Date(item.watchedAt).toLocaleDateString("pt-BR") : "—";
-      const ratingCell = item.stars ? "⭐".repeat(item.stars) : (item.rating === 'love' ? '🤩' : (item.rating === 'meh' ? '🫥' : '—'));
+      const ratingCell = item.stars ? "⭐".repeat(item.stars) : (item.rating === 'love' ? '🤩' : (item.rating === 'meh' ? '🫥' : ''));
+      const poster = item.imageData ? `<img src="${escapeHtml(item.imageData)}" alt="${escapeHtml(item.nome)}">` : (item.tipo === "filme" ? "🎬" : "📺");
       return `<div class="diary-row">
-        <div class="diary-date">${d}</div>
-        <div class="diary-title-cell" title="${escapeHtml(item.nome)}">${escapeHtml(item.nome)}</div>
-        <div class="diary-rating">${ratingCell}</div>
+        <div class="diary-poster">${poster}</div>
+        <div class="diary-info">
+          <div class="diary-title-cell" title="${escapeHtml(item.nome)}">${escapeHtml(item.nome)}</div>
+          <div class="diary-sub"><span class="diary-date">📅 ${d}</span>${ratingCell ? `<span class="diary-rating">${ratingCell}</span>` : ""}</div>
+        </div>
         <div class="diary-actions-cell">
           <button class="info-diary-btn" data-id="${item.id}" title="Detalhes" aria-label="Ver detalhes">ℹ️</button>
           <button class="undo-btn" data-id="${item.id}" title="Desfazer" aria-label="Desfazer finalização">↩</button>
@@ -1816,20 +1865,6 @@
     container.querySelectorAll(".info-diary-btn").forEach(b => b.addEventListener("click", () => openDetailModal(b.dataset.id)));
     container.querySelectorAll(".undo-btn").forEach(b => b.addEventListener("click", () => desfazerFinalizado(b.dataset.id)));
     container.querySelectorAll(".remove-diary-btn").forEach(b => b.addEventListener("click", () => deleteItem(b.dataset.id)));
-  }
-
-  function renderAchievements() {
-    const list = [
-      ["🎬", "Primeiro título", items.length >= 1],
-      ["🏆", "10 títulos", items.length >= 10],
-      ["🎥", "10 finalizados", items.filter(i => i.assistido).length >= 10],
-      ["❤️", "5 favoritos", items.filter(i => i.favorite).length >= 5],
-      ["⭐", "Nota 5 estrelas", items.some(i => i.stars === 5)],
-      ["🔥", "7 dias seguidos", parseInt(localStorage.getItem(STREAK_KEY) || "0", 10) >= 7],
-    ];
-    $("achievements").innerHTML = list.map(([icon, label, done]) =>
-      `<div class="achievement${done ? ' done' : ''}"><b>${icon}</b>${label}</div>`
-    ).join("");
   }
 
   function openDetailModal(id) {
@@ -2022,7 +2057,6 @@
     await persist();
     renderBiblioteca();
     renderDiario();
-    renderCalendario();
     showToast("✓ Salvo!");
     closeModal();
   }
@@ -2099,13 +2133,15 @@
       renderSupportAlert();
       renderStreak();
     }
-    $("fabAddBtn").classList.toggle("hidden", name === "adicionar");
-    $("fabTelegramBtn")?.classList.toggle("hidden", name === "adicionar");
+    $("fabAddBtn").classList.toggle("hidden", name === "adicionar" || name === "calendario");
+    $("fabTelegramBtn")?.classList.toggle("hidden", name === "adicionar" || name === "calendario");
+    $("calendarNotifyBtn")?.classList.toggle("hidden", name === "adicionar" || name === "calendario");
     if (name === "adicionar") setTimeout(() => $("nomeInput")?.focus(), 150);
   }
 
   function bindEvents() {
     $("themeToggle")?.addEventListener("click", toggleTheme);
+    $("calendarNotifyBtn")?.addEventListener("click", () => switchTab("calendario"));
     document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
     document.querySelectorAll(".filter-chip").forEach(btn => btn.addEventListener("click", () => {
       currentFilter = btn.dataset.filter;
@@ -2171,7 +2207,6 @@
     updateStreak();
     renderBiblioteca();
     renderDiario();
-    renderCalendario();
     renderSupportAlert();
     renderStreak();
   }
