@@ -150,6 +150,25 @@
     box-shadow: 0 2px 20px rgba(163, 2, 98, 0.2);
   }
   .header-top { display: flex; align-items: center; justify-content: space-between; }
+  .tab-bar-ios {
+    position: fixed;
+    left: 50%; bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    display: flex; gap: 0.2rem;
+    background: var(--tab-bg);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    padding: 0.35rem; border-radius: 100px;
+    border: 0.5px solid var(--border);
+    width: auto; max-width: calc(100% - 2.2rem);
+    box-shadow: 0 10px 30px rgba(163, 2, 98, 0.45), inset 0 0 12px rgba(163, 2, 98, 0.15);
+    z-index: 200;
+  }
+  .tab-bar-ios .tab {
+    flex: 0 1 auto;
+    padding: 0.55rem 1.1rem;
+  }
+  .tab-bar-ios.hidden { display: none !important; }
   .logo { font-size: 1.65rem; font-weight: 800; letter-spacing: -0.5px; white-space: nowrap; }
   .logo .white { color: var(--text); text-shadow: 0 0 10px rgba(209, 98, 164, 0.6); }
   .logo .orange {
@@ -168,16 +187,6 @@
   }
   body.light-theme .theme-toggle { background: rgba(163, 2, 98, 0.08); }
   .theme-toggle:active { transform: scale(0.92); }
-  .tab-bar-ios {
-    display: flex; gap: 0.15rem;
-    background: var(--tab-bg);
-    backdrop-filter: blur(30px);
-    padding: 0.25rem; border-radius: 100px;
-    border: 0.5px solid var(--border);
-    width: 100%; overflow-x: auto; scrollbar-width: none;
-    box-shadow: inset 0 0 12px rgba(163, 2, 98, 0.2);
-  }
-  .tab-bar-ios::-webkit-scrollbar { display: none; }
   .tab {
     flex: 1;
     padding: 0.4rem 0.6rem;
@@ -194,7 +203,7 @@
     box-shadow: var(--glow-pink);
   }
 
-  main { padding: 1rem 0.9rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+  main { padding: 1rem 0.9rem calc(5.5rem + env(safe-area-inset-bottom, 0px)); max-width: 1400px; margin: 0 auto; width: 100%; }
   .view { display: none; animation: fadeUp 0.25s ease; }
   .view.active { display: block; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -748,6 +757,8 @@
   @media (max-width: 380px) {
     .logo { font-size: 1.4rem; }
     .tab { padding: 0.34rem 0.7rem; font-size: 0.7rem; }
+    .tab-bar-ios { max-width: calc(100% - 5.5rem); left: calc(50% - 1.2rem); padding: 0.3rem; }
+    .fab-add { width: 50px; height: 50px; right: 0.8rem; }
     .hero-title { font-size: 1.1rem; }
     .hero-btn { font-size: 0.7rem; padding: 0.4rem 0.8rem; }
     .support-text { font-size: 0.72rem; }
@@ -765,11 +776,6 @@
     <div class="logo"><span class="white">CINE</span><span class="orange">ÁRIO</span></div>
     <button class="theme-toggle" id="themeToggle" title="Alternar tema" aria-label="Alternar tema claro/escuro">🌙</button>
   </div>
-  <nav class="tab-bar-ios" role="tablist" aria-label="Navegação principal">
-    <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true" aria-controls="view-biblioteca">Início</button>
-    <button class="tab" data-tab="diario" role="tab" aria-selected="false" aria-controls="view-diario">Diário</button>
-    <button class="tab" data-tab="backup" role="tab" aria-selected="false" aria-controls="view-backup" aria-label="Configurações e backup">⚙️</button>
-  </nav>
 </header>
 
 <main>
@@ -911,6 +917,12 @@
     <div id="finishModalBody"></div>
   </div>
 </div>
+
+<nav class="tab-bar-ios" role="tablist" aria-label="Navegação principal">
+  <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true" aria-controls="view-biblioteca">Início</button>
+  <button class="tab" data-tab="diario" role="tab" aria-selected="false" aria-controls="view-diario">Diário</button>
+  <button class="tab" data-tab="backup" role="tab" aria-selected="false" aria-controls="view-backup" aria-label="Configurações e backup">⚙️</button>
+</nav>
 
 <a class="fab-telegram" id="fabTelegramBtn" href="https://t.me/+FMM16BQIC444NWQx" target="_blank" rel="noopener noreferrer" title="Entrar no Telegram" aria-label="Entrar no grupo do Telegram">
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.05 3.16 2.83 10.4c-1.24.5-1.24 1.2-.23 1.5l4.67 1.46 1.8 5.55c.22.6.36.85.75.85.32 0 .46-.14.65-.32l1.7-1.65 3.5 2.6c.8.44 1.36.2 1.57-.75l2.84-13.4c.3-1.16-.44-1.68-1.44-1.28zM8.6 13.4l9.4-5.9c.44-.27.85-.12.52.18L10.6 15c-.3.28-.6.4-1.1.46l-.9-2.06z"/></svg>
