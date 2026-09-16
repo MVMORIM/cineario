@@ -386,6 +386,43 @@
   .suggest-title { font-size: 0.68rem; font-weight: 650; line-height: 1.25; margin-top: 0.35rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .suggest-meta { font-size: 0.58rem; color: var(--muted); margin-top: 0.1rem; }
 
+  /* Top 10 estilo Netflix */
+  .top10-row { display: flex; gap: 0.1rem; overflow-x: auto; scrollbar-width: none; padding: 0.2rem 0.3rem 0.6rem 0.9rem; }
+  .top10-row::-webkit-scrollbar { display: none; }
+  .top10-card { flex: 0 0 auto; width: 122px; display: flex; align-items: flex-end; cursor: pointer; position: relative; }
+  .top10-rank {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 4.6rem;
+    line-height: 0.8;
+    letter-spacing: -4px;
+    -webkit-text-stroke: 1.5px var(--les-pink);
+    color: var(--bg);
+    background: linear-gradient(180deg, var(--les-pink) 0%, var(--les-magenta) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(163,2,98,0.7));
+    margin-right: -0.95rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    user-select: none;
+  }
+  body.light-theme .top10-rank {
+    -webkit-text-stroke: 1.5px var(--les-magenta);
+    filter: drop-shadow(0 0 6px rgba(163,2,98,0.35));
+  }
+  .top10-rank.rank-double { font-size: 3.6rem; letter-spacing: -3px; margin-right: -0.55rem; }
+  .top10-poster-wrap { position: relative; width: 84px; aspect-ratio: 2/3; flex-shrink: 0; z-index: 2; }
+  .top10-poster {
+    width: 100%; height: 100%; border-radius: 10px; overflow: hidden;
+    background: var(--card-bg); border: 1px solid var(--border);
+    box-shadow: var(--glow-pink);
+  }
+  .top10-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .top10-star { position: absolute; bottom: 3px; right: 3px; font-size: 0.6rem; background: rgba(26,5,16,0.75); border-radius: 6px; padding: 1px 4px; display: flex; align-items: center; gap: 1px; color: var(--les-coral); font-weight: 700; backdrop-filter: blur(4px); }
+
   .fab-add {
     position: fixed; right: 1.1rem; bottom: calc(1.3rem + env(safe-area-inset-bottom, 0px));
     width: 56px; height: 56px; border-radius: 50%;
@@ -1243,6 +1280,7 @@
       favorite: !!i.favorite,
       category: String(i.category || ""),
       watchedAt: i.watchedAt || null,
+      clicks: Array.isArray(i.clicks) ? i.clicks.filter(t => typeof t === "number" && t > Date.now() - 30 * 24 * 60 * 60 * 1000).slice(-100) : [],
       progressUpdatedAt: i.progressUpdatedAt || null,
       createdAt: i.createdAt || Date.now(),
       updatedAt: i.updatedAt || Date.now()
@@ -1547,22 +1585,55 @@
     });
   }
 
+  const CLICK_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
+
+  function registerClick(item) {
+    if (!item) return;
+    if (!Array.isArray(item.clicks)) item.clicks = [];
+    item.clicks.push(Date.now());
+    const cutoff = Date.now() - CLICK_WINDOW_MS;
+    item.clicks = item.clicks.filter(t => t > cutoff).slice(-100);
+    persist();
+    renderSuggestions();
+  }
+
+  function recentClickCount(item) {
+    if (!Array.isArray(item.clicks)) return 0;
+    const cutoff = Date.now() - CLICK_WINDOW_MS;
+    return item.clicks.filter(t => t > cutoff).length;
+  }
+
+  function top10Score(item) {
+    return (item.stars || 0) * 10 + recentClickCount(item) * 2;
+  }
+
   function renderSuggestions() {
     const container = $("suggestContainer");
     if (!container) return;
-    const cincoEstrelas = items.filter(i => i.stars === 5);
-    if (!cincoEstrelas.length) { container.innerHTML = ""; return; }
-    const picks = [...cincoEstrelas]
-      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
-      .slice(0, 8);
-    const html = picks.map(i => {
+    const candidatos = items.filter(i => i.stars > 0 || recentClickCount(i) > 0);
+    if (!candidatos.length) { container.innerHTML = ""; return; }
+    const picks = [...candidatos]
+      .sort((a, b) => (top10Score(b) - top10Score(a)) || ((b.updatedAt || 0) - (a.updatedAt || 0)))
+      .slice(0, 10);
+    const html = picks.map((i, idx) => {
+      const rank = idx + 1;
       const img = i.imageData
         ? `<img src="${escapeHtml(i.imageData)}" loading="lazy" alt="Capa de ${escapeHtml(i.nome)}">`
-        : `<div class="poster-placeholder ${i.tipo}" style="border-radius:13px">${i.tipo === "serie" ? "📺" : "🎬"}</div>`;
-      const meta = "⭐".repeat(i.stars) + (i.tipo === "serie" ? ` • T${i.temp || 1} • E${i.ep || 1}` : (i.platform ? " • " + i.platform : ""));
-      return `<div class="suggest-card" data-id="${i.id}"><div class="suggest-poster">${img}</div><div class="suggest-title">${escapeHtml(i.nome)}</div><div class="suggest-meta">${meta}</div></div>`;
+        : `<div class="poster-placeholder ${i.tipo}" style="border-radius:10px">${i.tipo === "serie" ? "📺" : "🎬"}</div>`;
+      const rankClass = rank >= 10 ? " rank-double" : "";
+      const clicks = recentClickCount(i);
+      const badge = i.stars > 0
+        ? `<span class="top10-star">⭐ ${i.stars}</span>`
+        : (clicks > 0 ? `<span class="top10-star">👆 ${clicks}</span>` : "");
+      return `<div class="top10-card" data-id="${i.id}">
+        <span class="top10-rank${rankClass}">${rank}</span>
+        <div class="top10-poster-wrap">
+          <div class="top10-poster">${img}</div>
+          ${badge}
+        </div>
+      </div>`;
     }).join("");
-    container.innerHTML = `<div class="suggest-wrap"><div class="suggest-head"><h2>⭐ Top 5 estrelas</h2></div><div class="suggest-row">${html}</div></div>`;
+    container.innerHTML = `<div class="suggest-wrap"><div class="suggest-head"><h2>🏆 Top 10</h2></div><div class="top10-row">${html}</div></div>`;
     container.querySelectorAll("[data-id]").forEach(b => b.addEventListener("click", () => openDetailModal(b.dataset.id)));
   }
 
@@ -1964,6 +2035,7 @@
     selectedId = id;
     const item = items.find(i => i.id === id);
     if (!item) return;
+    registerClick(item);
     lastFocus = document.activeElement;
     const img = item.imageData
       ? `<img class="detail-poster" src="${escapeHtml(item.imageData)}" alt="Capa de ${escapeHtml(item.nome)}">`
