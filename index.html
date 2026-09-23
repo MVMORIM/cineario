@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#1a0510">
 <meta name="description" content="CINEÁRIO — biblioteca pessoal de filmes e séries, com progresso, avaliações e diário.">
-<title>CINEÁRIO — Seu Diário Avaliações e Progresso</title>
+<title>CINEÁRIO — Biblioteca com Avaliações e Progresso</title>
 <link rel="icon" type="image/png" sizes="32x32" href="cineario-icon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="cineario-icon-48.png">
 <link rel="apple-touch-icon" sizes="180x180" href="cineario-icon-180.png">
@@ -1406,7 +1406,7 @@
   </div>
 
   <div class="view" id="view-calendario" role="tabpanel">
-    <div class="cal-legend">📆</div>
+    <div class="cal-legend">📆 Episódios calculados automaticamente a partir da data de estreia</div>
     <div class="cal-week" id="calendarioGrid"></div>
     <div class="empty-state hidden" id="emptyCalendarMsg"><div style="font-size:2rem;margin-bottom:0.5rem">🗓️</div>Nenhuma série com data de estreia definida.<br>Edite um título e defina a <strong>data do 1º episódio</strong> e o <strong>total de episódios</strong>.</div>
   </div>
@@ -1455,7 +1455,7 @@
         </button>
         <button class="backup-btn import" id="importBooksBtn">
           <span class="backup-title">📥 Baixar Livros (metadados + capas)</span>
-          <span class="backup-desc">Restaura título, progresso, marcadores, anotações e capas — sem os PDFs. Os PDFs precisam ser reanexados um a um</span>
+          <span class="backup-desc">Restaura tudo. Os PDFs precisam ser reanexados um a um</span>
         </button>
       </div>
       <div class="backup-info" style="margin-top:0.6rem">
@@ -1530,9 +1530,9 @@
 </div>
 
 <nav class="tab-bar-ios" id="tab-bar-ios-nav" role="tablist" aria-label="Navegação principal">
-  <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true" aria-controls="view-biblioteca"> 🏠 </button>
-  <button class="tab" data-tab="livros" role="tab" aria-selected="false" aria-controls="view-livros"> 📚 </button>
-  <button class="tab" data-tab="diario" role="tab" aria-selected="false" aria-controls="view-diario"> 📓 </button>
+  <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true" aria-controls="view-biblioteca">Início</button>
+  <button class="tab" data-tab="livros" role="tab" aria-selected="false" aria-controls="view-livros">📚 Livros</button>
+  <button class="tab" data-tab="diario" role="tab" aria-selected="false" aria-controls="view-diario">Diário</button>
   <button class="tab" data-tab="backup" role="tab" aria-selected="false" aria-controls="view-backup" aria-label="Configurações e backup">⚙️</button>
 </nav>
 
@@ -1918,7 +1918,9 @@
 
       let added = 0;
       let filled = 0;
+      let updated = 0;
       const filledNames = [];
+      const updatedNames = [];
 
       for (const raw of backup.items) {
         const seedId = String(raw.id || "");
@@ -1936,26 +1938,64 @@
         const remote = remoteById.get(String(local.id)) || remoteByName.get(norm(local.nome));
         if (!remote) continue;
         let touched = false;
-        for (const field of ["url", "trailer", "ost"]) {
-          const localVal = (local[field] || "").trim();
+        let wasUpdate = false;
+
+        const localUrl  = (local.url  || "").trim();
+        const remoteUrl = (remote.url || "").trim();
+        const isYouTube = (u) => /youtube\.com|youtu\.be/i.test(u);
+
+        if (remoteUrl && isYouTube(remoteUrl) && localUrl !== remoteUrl) {
+          const origem = platformFromUrl(localUrl) || (local.platform || "").trim() || "Sem link";
+          wasUpdate = !!localUrl;
+          if (wasUpdate) {
+            updatedNames.push(`${local.nome} (${origem}→YouTube)`);
+          }
+          local.url = remoteUrl;
+          local.platform = "YouTube";
+          touched = true;
+        } else if (!localUrl && remoteUrl) {
+          local.url = remoteUrl;
+          const detected = platformFromUrl(remoteUrl);
+          if (detected) local.platform = detected;
+          touched = true;
+        }
+
+        for (const field of ["trailer", "ost"]) {
+          const localVal  = (local[field]  || "").trim();
           const remoteVal = (remote[field] || "").trim();
           if (!localVal && remoteVal) { local[field] = remoteVal; touched = true; }
         }
+
         if (touched) {
           local.updatedAt = Date.now();
-          filled++;
-          filledNames.push(local.nome);
+          if (wasUpdate) {
+            updated++;
+          } else {
+            filled++;
+            filledNames.push(local.nome);
+          }
         }
       }
 
-      if (added > 0 || filled > 0) await persist();
+      if (added > 0 || filled > 0 || updated > 0) await persist();
 
-      if (added > 0 && filled > 0) showToast(`✨ ${added} novo(s) + 🔗 ${filled} link(s)`, 3400);
-      else if (added > 0) showToast(`✨ ${added} novo(s) título(s)!`, 3000);
-      else if (filled > 0) {
-        const resumo = filledNames.slice(0, 3).join(", ");
-        const extra = filledNames.length > 3 ? ` +${filledNames.length - 3}` : "";
-        showToast(`🔗 ${filled} link(s): ${resumo}${extra}`, 3400);
+      const buildResumo = (names) => {
+        const resumo = names.slice(0, 3).join(", ");
+        const extra = names.length > 3 ? ` +${names.length - 3}` : "";
+        return `${resumo}${extra}`;
+      };
+
+      const partes = [];
+      if (added > 0)   partes.push(`✨ ${added} novo(s)`);
+      if (filled > 0)  partes.push(`🔗 ${filled} link(s)`);
+      if (updated > 0) partes.push(`♻️ ${updated} atualizado(s)`);
+
+      if (partes.length) {
+        const detalhes = [];
+        if (filled > 0)  detalhes.push(`🔗 ${buildResumo(filledNames)}`);
+        if (updated > 0) detalhes.push(`♻️ ${buildResumo(updatedNames)}`);
+        const sufixo = detalhes.length ? ` — ${detalhes.join(" | ")}` : "";
+        showToast(partes.join(" + ") + sufixo, 4200);
       }
     } catch (e) {
       if (e.name === "AbortError") console.warn("Merge: timeout");
@@ -2078,8 +2118,8 @@
     if (!shouldShowSupportAlert()) { container.innerHTML = ""; return; }
     container.innerHTML = `
       <div class="support-alert" id="supportAlertBox" role="alert">
-        <div class="support-text">💖 <strong> Doe aqui!</strong></div>
-        <button class="support-btn" id="supportPayBtn">☕ Doar</button>
+        <div class="support-text">💖 <strong>Apoie o projeto!</strong></div>
+        <button class="support-btn" id="supportPayBtn">☕ Fazer um pix / Apoiar</button>
         <button class="support-close" id="supportCloseBtn" aria-label="Fechar alerta">✕</button>
       </div>`;
     $("supportPayBtn")?.addEventListener("click", () => {
