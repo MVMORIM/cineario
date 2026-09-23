@@ -220,9 +220,6 @@
   .streak-fire { font-size: 1rem; }
   .streak-num { color: var(--accent2); font-weight: 800; text-shadow: 0 0 8px rgba(239,118,39,0.8); }
 
-  /* ============================================================
-     HERO COMPACTO (card) — trazido do arquivo deepseek_html_...
-     ============================================================ */
   .hero-card {
     background: var(--card-bg);
     border-radius: 18px;
@@ -386,7 +383,6 @@
   .suggest-title { font-size: 0.68rem; font-weight: 650; line-height: 1.25; margin-top: 0.35rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .suggest-meta { font-size: 0.58rem; color: var(--muted); margin-top: 0.1rem; }
 
-  /* Top 10 estilo Netflix */
   .top10-row { display: flex; gap: 0.1rem; overflow-x: auto; scrollbar-width: none; padding: 0.2rem 0.3rem 0.6rem 0.9rem; }
   .top10-row::-webkit-scrollbar { display: none; }
   .top10-card { flex: 0 0 auto; width: 122px; display: flex; align-items: flex-end; cursor: pointer; position: relative; }
@@ -604,7 +600,7 @@
     box-shadow: 0 0 15px rgba(255, 154, 86, 0.8);
     border: none;
   }
-  .poster-qbtn.delete-btn { background: rgba(213, 45, 0, 0.2); color: var(--les-orange-dark); border-color: rgba(213,45,0,0.4); }
+  .poster-qbtn.delete-btn { background: rgba(213, 45, 0, 0.2); color: var(--les-orange-dark); border-color: rgba(213,45,0.4); }
 
   .add-container, .backup-container {
     background: var(--surface);
@@ -786,7 +782,7 @@
   .backup-btn:hover { opacity: 0.9; transform: translateY(-2px); }
   .backup-btn.export { background: rgba(255, 154, 86, 0.15); color: var(--les-coral); border-color: rgba(255,154,86,0.4); box-shadow: var(--glow-coral); }
   .backup-btn.import { background: rgba(209, 98, 164, 0.15); color: var(--les-pink); border-color: rgba(209,98,164,0.4); box-shadow: var(--glow-pink); }
-  .backup-btn.reset { background: rgba(213, 45, 0, 0.15); color: var(--les-orange-dark); border-color: rgba(213,45,0,0.4); }
+  .backup-btn.reset { background: rgba(213, 45, 0, 0.15); color: var(--les-orange-dark); border-color: rgba(213,45,0.4); }
   .backup-btn:active { transform: scale(0.97); opacity: 0.8; }
   .backup-info { background: rgba(209, 98, 164, 0.08); border-radius: 16px; padding: 0.85rem; font-size: 0.7rem; color: var(--muted); text-align: center; border: 0.5px solid var(--border); line-height: 1.5; }
   #importFileInput { display: none; }
@@ -889,6 +885,463 @@
     .diary-row { padding: 0.6rem 0.7rem; gap: 0.55rem; }
     .diary-poster { width: 34px; height: 48px; }
   }
+
+  /* ============================================================
+     ABA LIVROS
+     ============================================================ */
+
+  #book-reader-view {
+    position: fixed; inset: 0;
+    background: var(--bg); z-index: 500;
+    display: none; flex-direction: column;
+    overflow: hidden;
+  }
+  #book-reader-view.open { display: flex; }
+
+  .book-reader-header {
+    padding: 0.75rem 1rem;
+    background: var(--header-bg); backdrop-filter: blur(28px);
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 0.5px solid var(--border); gap: 0.5rem;
+  }
+  .book-reader-title {
+    flex: 1; font-size: 0.8rem; font-weight: 600; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .book-reader-close {
+    background: rgba(209, 98, 164, 0.15); border: 0.5px solid var(--border);
+    border-radius: 50%; width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; cursor: pointer; color: var(--les-pink);
+    transition: 0.2s; flex-shrink: 0;
+  }
+  .book-reader-close:active { transform: scale(0.9); }
+
+  .book-reading-bar {
+    position: relative; height: 3px; background: rgba(209, 98, 164, 0.15);
+  }
+  .book-reading-fill {
+    height: 100%; background: linear-gradient(90deg, #ef7627, #d162a4);
+    box-shadow: 0 0 8px rgba(209,98,164,0.8);
+    width: 0%; transition: width 0.3s;
+  }
+
+  .book-actions-bar {
+    display: flex; gap: 0.4rem; padding: 0.5rem 0.9rem;
+    background: var(--header-bg); backdrop-filter: blur(28px);
+    border-bottom: 0.5px solid var(--border);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .book-actions-bar::-webkit-scrollbar { display: none; }
+  .book-action-btn {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 0.35rem;
+    padding: 0.45rem 0.85rem; border-radius: 30px;
+    background: rgba(209, 98, 164, 0.15);
+    border: 0.5px solid var(--border);
+    color: var(--text2); font-size: 0.7rem; font-weight: 700;
+    cursor: pointer; white-space: nowrap; font-family: inherit;
+    transition: 0.15s;
+  }
+  .book-action-btn:active { transform: scale(0.95); opacity: 0.8; }
+  .book-action-btn.active {
+    background: linear-gradient(135deg, #d162a4, #a30262);
+    color: #fff; border-color: transparent;
+    box-shadow: var(--glow-pink);
+  }
+  .book-action-btn.offline-ok {
+    background: rgba(255, 154, 86, 0.2);
+    color: var(--les-coral);
+    border-color: rgba(255, 154, 86, 0.5);
+  }
+  .book-action-btn .badge-count {
+    background: var(--les-coral); color: #2a0a1c;
+    font-size: 0.6rem; font-weight: 800;
+    padding: 0.1rem 0.4rem; border-radius: 10px;
+    min-width: 16px; text-align: center;
+  }
+
+  .book-scroll-area {
+    flex: 1; overflow-y: auto; padding: 1.25rem 1rem;
+    scroll-behavior: smooth;
+    position: relative;
+  }
+  .book-page-content {
+    max-width: 680px; margin: 0 auto;
+    background: var(--card-bg); border-radius: 18px;
+    padding: 1.5rem 1.4rem;
+    font-family: 'Georgia', serif; font-size: 1rem; line-height: 1.85;
+    color: var(--text); border: 1px solid var(--border);
+    box-shadow: 0 0 20px rgba(163, 2, 98, 0.2);
+  }
+  .book-page-content p { margin-bottom: 1.2em; text-indent: 1.5em; }
+  .book-page-content p:first-of-type { text-indent: 0; }
+
+  .book-tts-highlight {
+    background: rgba(209, 98, 164, 0.35);
+    border-radius: 6px; padding: 1px 3px;
+    transition: background 0.2s;
+  }
+
+  .book-page-hint {
+    text-align: center; font-size: 0.72rem; color: var(--muted);
+    padding: 0.4rem 0; display: none;
+  }
+
+  .book-reader-footer {
+    padding: 0.7rem 0.9rem;
+    background: var(--header-bg); backdrop-filter: blur(28px);
+    border-top: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.6rem; flex-wrap: wrap;
+  }
+  .book-ctrl-group {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: var(--surface2); border-radius: 40px; padding: 0.3rem 0.7rem;
+    border: 0.5px solid var(--border);
+  }
+  .book-ctrl-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #d162a4, #a30262);
+    color: white; font-size: 1rem; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.15s; box-shadow: var(--glow-pink);
+  }
+  .book-ctrl-btn:active { transform: scale(0.92); }
+  .book-ctrl-btn.small {
+    width: 34px; height: 34px; font-size: 0.85rem;
+    background: rgba(209, 98, 164, 0.2); color: var(--text);
+    border: 0.5px solid var(--border); box-shadow: none;
+  }
+  .book-page-info {
+    font-size: 0.7rem; color: var(--muted); min-width: 50px; text-align: center;
+  }
+  #book-page-input {
+    width: 46px; padding: 0.3rem;
+    background: var(--input-bg); border: 1px solid var(--input-border);
+    border-radius: 8px; color: var(--text); text-align: center;
+    font-family: inherit; font-size: 0.75rem; outline: none;
+  }
+  .book-speed-group {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: var(--surface2); border-radius: 40px; padding: 0.3rem 0.7rem;
+    border: 0.5px solid var(--border); font-size: 0.65rem; color: var(--muted);
+  }
+  #book-tts-speed { width: 65px; cursor: pointer; accent-color: var(--les-pink); }
+  #book-speed-val { color: var(--les-pink); font-weight: 700; min-width: 32px; font-size: 0.68rem; }
+  #book-para-info { font-size: 0.65rem; color: var(--muted); }
+
+  #book-marks-panel {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 100%; max-width: 420px;
+    background: var(--modal-bg);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    z-index: 20;
+    display: flex; flex-direction: column;
+    box-shadow: -8px 0 30px rgba(163, 2, 98, 0.3);
+  }
+  #book-marks-panel.open { transform: translateX(0); }
+  .book-marks-header {
+    padding: 0.9rem 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .book-marks-title { font-weight: 800; font-size: 0.95rem; color: var(--les-coral); }
+  .book-marks-close {
+    background: rgba(209, 98, 164, 0.15); border: 0.5px solid var(--border);
+    border-radius: 50%; width: 32px; height: 32px;
+    color: var(--les-pink); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .book-marks-tabs {
+    display: flex; gap: 0.4rem; padding: 0.6rem 0.9rem;
+    border-bottom: 0.5px solid var(--border);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .book-marks-tabs::-webkit-scrollbar { display: none; }
+  .book-marks-tab {
+    flex: 0 0 auto;
+    padding: 0.35rem 0.85rem; border-radius: 30px;
+    background: rgba(209, 98, 164, 0.12);
+    border: none; color: var(--text2);
+    font-size: 0.7rem; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .book-marks-tab.active {
+    background: linear-gradient(135deg, #d162a4, #a30262); color: #fff;
+    box-shadow: var(--glow-pink);
+  }
+  .book-marks-list {
+    flex: 1; overflow-y: auto; padding: 0.7rem 0.9rem;
+  }
+  .book-mark-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--les-coral);
+    border-radius: 14px; padding: 0.75rem 0.85rem;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .book-mark-item:hover {
+    box-shadow: var(--glow-pink);
+    transform: translateX(-2px);
+  }
+  .book-mark-item.c-yellow { border-left-color: #ffd93d; }
+  .book-mark-item.c-pink   { border-left-color: #d162a4; }
+  .book-mark-item.c-blue   { border-left-color: #4db8ff; }
+  .book-mark-item.c-green  { border-left-color: #6bcf7f; }
+  .book-mark-item.c-note   { border-left-color: #ef7627; }
+  .book-mark-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.5rem; margin-bottom: 0.35rem;
+  }
+  .book-mark-page {
+    font-size: 0.65rem; font-weight: 800; color: var(--les-coral);
+    background: rgba(255, 154, 86, 0.15);
+    padding: 0.1rem 0.5rem; border-radius: 10px;
+  }
+  .book-mark-date {
+    font-size: 0.6rem; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .book-mark-text {
+    font-size: 0.75rem; line-height: 1.45; color: var(--text2);
+    display: -webkit-box; -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical; overflow: hidden;
+    font-style: italic;
+  }
+  .book-mark-note {
+    margin-top: 0.4rem; padding: 0.4rem 0.55rem;
+    background: rgba(239, 118, 39, 0.12);
+    border-radius: 8px;
+    font-size: 0.7rem; color: var(--text2); line-height: 1.4;
+    border-left: 2px solid var(--les-orange);
+  }
+  .book-mark-actions {
+    display: flex; gap: 0.35rem; margin-top: 0.5rem;
+  }
+  .book-mark-actions button {
+    flex: 1; padding: 0.35rem;
+    background: rgba(209, 98, 164, 0.12);
+    border: 0.5px solid var(--border);
+    border-radius: 10px; color: var(--text2);
+    font-size: 0.65rem; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .book-mark-actions button.danger {
+    color: var(--les-orange-dark);
+    background: rgba(213, 45, 0, 0.12);
+    border-color: rgba(213, 45, 0, 0.3);
+  }
+  .book-marks-empty {
+    text-align: center; color: var(--muted);
+    padding: 2rem 1rem; font-size: 0.8rem; line-height: 1.6;
+  }
+
+  #book-note-popover {
+    position: fixed; inset: 0;
+    background: rgba(26, 5, 16, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 600;
+    display: none; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  #book-note-popover.open { display: flex; }
+  body.light-theme #book-note-popover { background: rgba(255, 245, 248, 0.85); }
+  .book-note-box {
+    background: var(--modal-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.2rem;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 20px 60px rgba(163, 2, 98, 0.4);
+  }
+  .book-note-box h4 {
+    font-size: 0.95rem; color: var(--les-coral);
+    margin-bottom: 0.7rem; font-weight: 800;
+  }
+  .book-note-quote {
+    background: rgba(209, 98, 164, 0.08);
+    border-left: 3px solid var(--les-pink);
+    border-radius: 8px; padding: 0.55rem 0.7rem;
+    font-size: 0.72rem; font-style: italic;
+    color: var(--text2); line-height: 1.4;
+    margin-bottom: 0.7rem;
+    max-height: 90px; overflow-y: auto;
+  }
+  .book-note-box textarea {
+    width: 100%; min-height: 80px;
+    background: var(--surface2);
+    border: 1px solid var(--input-border);
+    border-radius: 12px; padding: 0.65rem 0.75rem;
+    color: var(--text); font-family: inherit; font-size: 0.85rem;
+    resize: vertical; outline: none;
+  }
+  .book-note-box textarea:focus {
+    border-color: var(--les-pink);
+    box-shadow: 0 0 12px rgba(209, 98, 164, 0.4);
+  }
+  .book-color-picker {
+    display: flex; gap: 0.5rem; margin: 0.7rem 0 0.3rem;
+    align-items: center;
+  }
+  .book-color-picker span {
+    font-size: 0.68rem; color: var(--muted); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .book-color-dot {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer; transition: 0.15s;
+  }
+  .book-color-dot.c-yellow { background: #ffd93d; }
+  .book-color-dot.c-pink   { background: #d162a4; }
+  .book-color-dot.c-blue   { background: #4db8ff; }
+  .book-color-dot.c-green  { background: #6bcf7f; }
+  .book-color-dot.active {
+    border-color: var(--text);
+    transform: scale(1.15);
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  }
+  .book-note-actions {
+    display: flex; gap: 0.5rem; margin-top: 0.9rem;
+  }
+  .book-note-actions button {
+    flex: 1; padding: 0.7rem;
+    border-radius: 30px; border: none;
+    font-weight: 700; font-size: 0.8rem;
+    cursor: pointer; font-family: inherit;
+  }
+  .book-note-actions .btn-cancel-note {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .book-note-actions .btn-save-note {
+    background: linear-gradient(135deg, #d162a4, #a30262);
+    color: #fff;
+    box-shadow: var(--glow-pink);
+  }
+
+  .book-user-mark {
+    border-radius: 4px; padding: 0 2px;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .book-user-mark.c-yellow { background: rgba(255, 217, 61, 0.45); }
+  .book-user-mark.c-pink   { background: rgba(209, 98, 164, 0.45); }
+  .book-user-mark.c-blue   { background: rgba(77, 184, 255, 0.45); }
+  .book-user-mark.c-green  { background: rgba(107, 207, 127, 0.45); }
+  .book-user-mark:hover { filter: brightness(1.3); }
+
+  .book-eta-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-size: 0.65rem; color: var(--les-coral);
+    background: rgba(255, 154, 86, 0.15);
+    padding: 0.15rem 0.55rem; border-radius: 12px;
+    font-weight: 700; margin-left: 0.4rem;
+  }
+
+  #book-selection-menu {
+    position: absolute;
+    background: var(--modal-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0.35rem;
+    display: none;
+    gap: 0.25rem;
+    box-shadow: 0 8px 30px rgba(163, 2, 98, 0.5);
+    z-index: 30;
+  }
+  #book-selection-menu.show { display: flex; }
+  #book-selection-menu button {
+    width: 34px; height: 34px;
+    border-radius: 50%; border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.15s;
+  }
+  #book-selection-menu button:hover { transform: scale(1.1); }
+  #book-selection-menu .m-yellow { background: #ffd93d; }
+  #book-selection-menu .m-pink   { background: #d162a4; }
+  #book-selection-menu .m-blue   { background: #4db8ff; }
+  #book-selection-menu .m-green  { background: #6bcf7f; }
+  #book-selection-menu .m-note   { background: #ef7627; color: #fff; font-size: 1.1rem; }
+
+  .books-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem;
+  }
+  @media (min-width: 400px) { .books-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 650px) { .books-grid { grid-template-columns: repeat(4, 1fr); gap: 0.9rem; } }
+
+  .book-card {
+    background: var(--card-bg); border-radius: 16px;
+    border: 1px solid var(--border); padding: 0.75rem;
+    cursor: pointer; transition: 0.2s;
+    box-shadow: 0 4px 20px rgba(163, 2, 98, 0.2);
+  }
+  .book-card:hover { box-shadow: 0 4px 25px rgba(209, 98, 164, 0.45); }
+  .book-card:active { transform: scale(0.97); }
+
+  .book-cover {
+    width: 100%; aspect-ratio: 2/3; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.8rem;
+    background: linear-gradient(160deg, rgba(209,98,164,0.35), var(--card-bg));
+    border: 1px solid var(--border); margin-bottom: 0.55rem;
+    position: relative; overflow: hidden;
+  }
+  .book-cover img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 10px; }
+  .book-cover-progress {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 0.6rem 0.35rem 0.3rem;
+    background: linear-gradient(180deg, transparent, rgba(26,5,16,0.9));
+  }
+  .book-cover-pbar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.2); overflow: hidden; }
+  .book-cover-pfill { height: 100%; background: linear-gradient(90deg, #ef7627, #d162a4); }
+
+  .book-title {
+    font-size: 0.73rem; font-weight: 700; line-height: 1.25;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    margin-bottom: 0.25rem;
+  }
+  .book-meta-small { font-size: 0.58rem; color: var(--muted); }
+  .book-fav-btn { font-size: 0.9rem; float: right; background: none; border: none; cursor: pointer; padding: 0; }
+
+  .books-filter-bar {
+    background: var(--surface); backdrop-filter: blur(20px);
+    border-radius: 40px; padding: 0.3rem 0.6rem; margin-bottom: 0.7rem;
+    display: flex; align-items: center; gap: 0.4rem;
+    overflow-x: auto; scrollbar-width: none;
+    border: 0.5px solid var(--border);
+    box-shadow: inset 0 0 15px rgba(163, 2, 98, 0.15);
+  }
+  .books-filter-bar::-webkit-scrollbar { display: none; }
+  .book-chip {
+    padding: 0.3rem 0.85rem; border-radius: 40px; flex-shrink: 0;
+    background: rgba(209, 98, 164, 0.15); border: none; color: var(--text2);
+    font-weight: 600; font-size: 0.7rem; cursor: pointer; white-space: nowrap;
+    transition: 0.15s; font-family: inherit;
+  }
+  .book-chip.active {
+    background: linear-gradient(135deg, #d162a4, #a30262); color: #fff;
+    box-shadow: var(--glow-pink);
+  }
+  .books-search {
+    flex: 1; min-width: 80px;
+    background: rgba(209, 98, 164, 0.12); border-radius: 30px;
+    padding: 0.25rem 0.65rem; display: flex; align-items: center; gap: 4px;
+    border: 0.5px solid var(--border);
+  }
+  .books-search input {
+    background: transparent; border: none; padding: 0.35rem 0.1rem;
+    color: var(--text); width: 100%; font-size: 0.8rem; outline: none;
+    font-family: inherit;
+  }
+  .books-search input::placeholder { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -993,6 +1446,42 @@
         <div class="warning-text" style="margin-top:0.6rem">⚠️ Excluir remove TODOS os títulos e o diário permanentemente.</div>
       </div>
       <input type="file" id="importFileInput" accept="application/json" aria-label="Arquivo do Diário do CINEÁRIO em JSON">
+
+      <h2 style="margin-top:1.6rem;">📚 Biblioteca de Livros (PDFs)</h2>
+      <div class="backup-buttons">
+        <button class="backup-btn export" id="exportBooksBtn">
+          <span class="backup-title">📤 Salvar Livros (metadados + capas)</span>
+          <span class="backup-desc">Exporta título, progresso, marcadores, anotações e capas — sem os PDFs</span>
+        </button>
+        <button class="backup-btn import" id="importBooksBtn">
+          <span class="backup-title">📥 Baixar Livros (metadados + capas)</span>
+          <span class="backup-desc">Restaura tudo. Os PDFs precisam ser reanexados um a um</span>
+        </button>
+      </div>
+      <div class="backup-info" style="margin-top:0.6rem">
+        <div>📦 O arquivo <strong>NÃO inclui os PDFs</strong> — só capas, progresso, página, marcadores e anotações.</div>
+        <div style="margin-top:0.4rem">🔗 Depois de importar, cada livro aparecerá com um botão <strong>📎 Anexar PDF</strong>. Basta escolher o arquivo correspondente e tudo é restaurado.</div>
+      </div>
+      <input type="file" id="importBooksFileInput" accept="application/json" style="display:none" aria-label="Arquivo de Livros do CINEÁRIO em JSON">
+      <input type="file" id="attachPdfInput" accept="application/pdf" style="display:none">
+    </div>
+  </div>
+
+  <!-- VIEW LIVROS -->
+  <div class="view" id="view-livros" role="tabpanel">
+    <div class="books-filter-bar">
+      <button class="book-chip active" data-bfilter="todos">Todos</button>
+      <button class="book-chip" data-bfilter="lendo">📖 Lendo</button>
+      <button class="book-chip" data-bfilter="favoritos">❤️ Favoritos</button>
+      <div class="books-search">
+        <span style="font-size:0.75rem;opacity:0.6">🔍</span>
+        <input type="text" id="booksSearchInput" placeholder="Buscar livro...">
+      </div>
+    </div>
+    <div class="books-grid" id="booksGrid"></div>
+    <div class="empty-state hidden" id="emptyBooksMsg">
+      <div style="font-size:2.2rem;margin-bottom:0.5rem">📚</div>
+      Nenhum livro na biblioteca.<br>Toque em <strong>+ PDF</strong> para importar.
     </div>
   </div>
 </main>
@@ -1040,8 +1529,9 @@
   </div>
 </div>
 
-<nav class="tab-bar-ios" role="tablist" aria-label="Navegação principal">
+<nav class="tab-bar-ios" id="tab-bar-ios-nav" role="tablist" aria-label="Navegação principal">
   <button class="tab active" data-tab="biblioteca" role="tab" aria-selected="true" aria-controls="view-biblioteca">Início</button>
+  <button class="tab" data-tab="livros" role="tab" aria-selected="false" aria-controls="view-livros">📚 Livros</button>
   <button class="tab" data-tab="diario" role="tab" aria-selected="false" aria-controls="view-diario">Diário</button>
   <button class="tab" data-tab="backup" role="tab" aria-selected="false" aria-controls="view-backup" aria-label="Configurações e backup">⚙️</button>
 </nav>
@@ -1051,6 +1541,93 @@
 </a>
 <button class="fab-notify" id="calendarNotifyBtn" title="Próximos lançamentos" aria-label="Ver próximos lançamentos">🔔<span class="notify-badge hidden" id="calendarNotifyBadge">0</span></button>
 <button class="fab-add" id="fabAddBtn" title="Adicionar título" aria-label="Adicionar novo título">+</button>
+<button class="fab-add hidden" id="fabBookImport" title="Importar PDF" aria-label="Importar livro PDF" style="background:linear-gradient(135deg,#ef7627,#d52d00);box-shadow:0 0 20px rgba(239,118,39,0.7)">📄</button>
+<input type="file" id="bookFileInput" accept="application/pdf" style="display:none" multiple>
+
+<!-- BOOK READER OVERLAY -->
+<div id="book-reader-view">
+  <div class="book-reader-header">
+    <button class="book-reader-close" id="bookReaderClose">✕</button>
+    <div class="book-reader-title" id="bookReaderTitle">Livro</div>
+  </div>
+  <div class="book-reading-bar"><div class="book-reading-fill" id="bookReadingFill"></div></div>
+
+  <!-- Barra de ações do leitor -->
+  <div class="book-actions-bar">
+    <button class="book-action-btn" id="bookMarkPageBtn" title="Marcar esta página">🔖 Marcar página</button>
+    <button class="book-action-btn" id="bookOpenMarksBtn" title="Ver marcadores e anotações">📑 Marcadores <span class="badge-count" id="bookMarksCount" style="display:none">0</span></button>
+    <button class="book-action-btn" id="bookOfflineBtn" title="Baixar para leitura offline">📥 Salvar offline</button>
+    <button class="book-action-btn" id="bookEtaBtn" title="Tempo estimado restante">⏱️ <span id="bookEtaText">—</span></button>
+  </div>
+
+  <!-- Painel lateral de marcadores -->
+  <div id="book-marks-panel">
+    <div class="book-marks-header">
+      <div class="book-marks-title">📑 Marcadores & Anotações</div>
+      <button class="book-marks-close" id="bookMarksClose">✕</button>
+    </div>
+    <div class="book-marks-tabs">
+      <button class="book-marks-tab active" data-bmtab="todos">Todos</button>
+      <button class="book-marks-tab" data-bmtab="paginas">🔖 Páginas</button>
+      <button class="book-marks-tab" data-bmtab="notas">✏️ Notas</button>
+      <button class="book-marks-tab" data-bmtab="destaques">🖍️ Destaques</button>
+    </div>
+    <div class="book-marks-list" id="bookMarksList"></div>
+  </div>
+
+  <!-- Menu flutuante de seleção -->
+  <div id="book-selection-menu">
+    <button class="m-yellow" data-mark-color="yellow" title="Destaque amarelo">🖍️</button>
+    <button class="m-pink"   data-mark-color="pink"   title="Destaque rosa">🖍️</button>
+    <button class="m-blue"   data-mark-color="blue"   title="Destaque azul">🖍️</button>
+    <button class="m-green"  data-mark-color="green"  title="Destaque verde">🖍️</button>
+    <button class="m-note"   data-mark-color="note"   title="Adicionar anotação">✏️</button>
+  </div>
+
+  <div class="book-scroll-area" id="bookScrollArea">
+    <div class="book-page-content" id="bookPageContent"></div>
+    <div class="book-page-hint" id="bookPageHint"></div>
+  </div>
+  <div class="book-reader-footer">
+    <div class="book-speed-group">
+      <span>🗣️</span>
+      <input type="range" id="book-tts-speed" min="0.5" max="2" step="0.1" value="0.85">
+      <span id="book-speed-val">0.85×</span>
+    </div>
+    <div class="book-ctrl-group">
+      <button class="book-ctrl-btn small" id="bookPrevSentence" title="Frase anterior">‹</button>
+      <button class="book-ctrl-btn small" id="bookPrevPage" title="Página anterior">❮</button>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <input type="number" id="book-page-input" min="1" value="1">
+        <span class="book-page-info" id="bookPageInfo">0 / 0</span>
+        <span id="book-para-info">¶ 0 / 0</span>
+      </div>
+      <button class="book-ctrl-btn small" id="bookNextPage" title="Próxima página">❯</button>
+      <button class="book-ctrl-btn small" id="bookNextSentence" title="Próxima frase">›</button>
+    </div>
+    <button id="bookPlayBtn" class="book-ctrl-btn">▶</button>
+  </div>
+</div>
+
+<!-- Popover de nova anotação -->
+<div id="book-note-popover">
+  <div class="book-note-box">
+    <h4>✏️ Nova anotação</h4>
+    <div class="book-note-quote" id="bookNoteQuote"></div>
+    <textarea id="bookNoteText" placeholder="Escreva sua anotação..."></textarea>
+    <div class="book-color-picker">
+      <span>Cor:</span>
+      <div class="book-color-dot c-yellow active" data-note-color="yellow"></div>
+      <div class="book-color-dot c-pink"   data-note-color="pink"></div>
+      <div class="book-color-dot c-blue"   data-note-color="blue"></div>
+      <div class="book-color-dot c-green"  data-note-color="green"></div>
+    </div>
+    <div class="book-note-actions">
+      <button class="btn-cancel-note" id="bookNoteCancel">Cancelar</button>
+      <button class="btn-save-note" id="bookNoteSave">Salvar anotação</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -1517,9 +2094,6 @@
     });
   }
 
-  // ============================================================
-  // HERO COMPACTO — renderContinueWatching (versão do arquivo antigo)
-  // ============================================================
   function renderContinueWatching() {
     const container = $("continueContainer");
     if (!container) return;
@@ -1585,7 +2159,7 @@
     });
   }
 
-  const CLICK_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
+  const CLICK_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
   function registerClick(item) {
     if (!item) return;
@@ -2288,7 +2862,8 @@
   function switchTab(name) {
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
     document.querySelectorAll(".tab").forEach(t => { t.classList.remove("active"); t.setAttribute("aria-selected", "false"); });
-    $("view-" + name).classList.add("active");
+    const targetView = $("view-" + name);
+    if (targetView) targetView.classList.add("active");
     const tab = document.querySelector(`.tab[data-tab="${name}"]`);
     if (tab) { tab.classList.add("active"); tab.setAttribute("aria-selected", "true"); }
     if (name === "diario") renderDiario();
@@ -2298,9 +2873,11 @@
       renderSupportAlert();
       renderStreak();
     }
-    $("fabAddBtn").classList.toggle("hidden", name === "adicionar" || name === "calendario");
-    $("fabTelegramBtn")?.classList.toggle("hidden", name === "adicionar" || name === "calendario");
-    $("calendarNotifyBtn")?.classList.toggle("hidden", name === "adicionar" || name === "calendario");
+    const hideCinearioFabs = name === "adicionar" || name === "calendario" || name === "livros";
+    $("fabAddBtn")?.classList.toggle("hidden", hideCinearioFabs);
+    $("fabTelegramBtn")?.classList.toggle("hidden", hideCinearioFabs);
+    $("calendarNotifyBtn")?.classList.toggle("hidden", hideCinearioFabs);
+    $("fabBookImport")?.classList.toggle("hidden", name !== "livros");
     if (name === "adicionar") setTimeout(() => $("nomeInput")?.focus(), 150);
   }
 
@@ -2376,11 +2953,1388 @@
     renderStreak();
   }
 
+  window._cinearioSwitchTab = switchTab;
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script>
+/* ============================================================
+   MÓDULO DE LIVROS — v5
+   Capa extraída + ETA + Marcadores + Backup metadados/capas
+   ============================================================ */
+(function () {
+  'use strict';
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+  const BOOKS_KEY   = 'cineario_books_v1';
+  const BPLAYER_KEY = 'cineario_books_player';
+  const BOOKS_DB_NAME = 'cinearioBooksDB';
+  const BOOKS_DB_VERSION = 1;
+  const PDF_STORE = 'pdfs';
+  const CACHE_NAME = 'cineario-books-v1';
+  const READING_WPM = 220;
+
+  const $ = id => document.getElementById(id);
+
+  /* ---------- Estado ---------- */
+  let booksData       = [];
+  let booksFilter     = 'todos';
+  let booksQuery      = '';
+  let bCurrentPdf     = null;
+  let bCurrentPage    = 1;
+  let bCurrentBookId  = null;
+  let bTextPages      = [];
+  let bIsPlaying      = false;
+  let bSaveTimeout    = null;
+  let bAudioCtx       = null;
+  let bSilentSrc      = null;
+  let bCurSentIdx     = 0;
+  let bSentencesList  = [];
+  let bShouldResume   = false;
+  let bPageRenderToken = 0;
+  let bSpeechToken     = 0;
+  let bCurrentNoteColor = 'yellow';
+  let bMarksFilter    = 'todos';
+  let bPendingNoteText = '';
+
+  let booksDB = null;
+
+  /* ============================================================
+     IndexedDB — PDFs
+     ============================================================ */
+  function openBooksDB() {
+    return new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) { reject(new Error('IndexedDB indisponível')); return; }
+      const req = indexedDB.open(BOOKS_DB_NAME, BOOKS_DB_VERSION);
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        if (!d.objectStoreNames.contains(PDF_STORE)) {
+          d.createObjectStore(PDF_STORE, { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = () => { booksDB = req.result; resolve(booksDB); };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function idbPutPdf(id, base64) {
+    return new Promise((resolve, reject) => {
+      if (!booksDB) { reject(new Error('DB não pronta')); return; }
+      const tx = booksDB.transaction(PDF_STORE, 'readwrite');
+      const req = tx.objectStore(PDF_STORE).put({ id, data: base64, savedAt: Date.now() });
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function idbGetPdf(id) {
+    return new Promise((resolve, reject) => {
+      if (!booksDB) { reject(new Error('DB não pronta')); return; }
+      const tx = booksDB.transaction(PDF_STORE, 'readonly');
+      const req = tx.objectStore(PDF_STORE).get(id);
+      req.onsuccess = () => resolve(req.result ? req.result.data : null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function idbDeletePdf(id) {
+    return new Promise((resolve, reject) => {
+      if (!booksDB) { resolve(); return; }
+      const tx = booksDB.transaction(PDF_STORE, 'readwrite');
+      const req = tx.objectStore(PDF_STORE).delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  /* ============================================================
+     Cache Storage — modo offline
+     ============================================================ */
+  async function saveOfflineCopy(id, base64) {
+    if (!('caches' in window)) throw new Error('Cache Storage indisponível');
+    const cache = await caches.open(CACHE_NAME);
+    const blob = base64ToBlob(base64, 'application/pdf');
+    const url = new URL(`/cineario-offline/${id}.pdf`, location.origin).href;
+    await cache.put(url, new Response(blob, {
+      headers: { 'Content-Type': 'application/pdf' }
+    }));
+    return url;
+  }
+
+  async function getOfflineCopy(id) {
+    if (!('caches' in window)) return null;
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      const url = new URL(`/cineario-offline/${id}.pdf`, location.origin).href;
+      const res = await cache.match(url);
+      if (!res) return null;
+      const blob = await res.blob();
+      return blobToBase64(blob);
+    } catch (e) { return null; }
+  }
+
+  async function hasOfflineCopy(id) {
+    if (!('caches' in window)) return false;
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      const url = new URL(`/cineario-offline/${id}.pdf`, location.origin).href;
+      const res = await cache.match(url);
+      return !!res;
+    } catch (e) { return false; }
+  }
+
+  async function removeOfflineCopy(id) {
+    if (!('caches' in window)) return;
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      const url = new URL(`/cineario-offline/${id}.pdf`, location.origin).href;
+      await cache.delete(url);
+    } catch (e) {}
+  }
+
+  function base64ToBlob(base64, mime) {
+    const byteChars = atob(base64);
+    const byteNums = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+    return new Blob([new Uint8Array(byteNums)], { type: mime });
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  /* ============================================================
+     Extração de capa do PDF
+     ============================================================ */
+  async function extractPdfCover(base64) {
+    try {
+      const data = atob(base64);
+      const arr = new Uint8Array(data.length);
+      for (let i = 0; i < data.length; i++) arr[i] = data.charCodeAt(i);
+
+      const tmp = await pdfjsLib.getDocument({ data: arr }).promise;
+      const page = await tmp.getPage(1);
+      const viewport = page.getViewport({ scale: 0.6 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      await tmp.destroy();
+      return canvas.toDataURL('image/jpeg', 0.82);
+    } catch (e) {
+      console.warn('Falha ao extrair capa do PDF:', e);
+      return null;
+    }
+  }
+
+  /* ============================================================
+     Metadados
+     ============================================================ */
+  function saveBooks() {
+    try {
+      const meta = booksData.map(b => ({ ...b, data: undefined }));
+      localStorage.setItem(BOOKS_KEY, JSON.stringify(meta));
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') showCineToast('⚠️ Armazenamento de metadados cheio!');
+    }
+  }
+
+  function loadBooks() {
+    try {
+      const saved = localStorage.getItem(BOOKS_KEY);
+      booksData = saved ? JSON.parse(saved) : [];
+      booksData.forEach(b => {
+        if (!Array.isArray(b.marks)) b.marks = [];
+        if (typeof b.offline !== 'boolean') b.offline = false;
+        if (typeof b.pdfAusente !== 'boolean') b.pdfAusente = false;
+      });
+    } catch (e) { booksData = []; }
+  }
+
+  /* ---------- Toast ---------- */
+  function showCineToast(msg, ms = 2000) {
+    const el = $('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), ms);
+  }
+
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  }
+
+  /* ---------- ETA ---------- */
+  function estimateReadingTime(book) {
+    if (!book || !book.totalPages || !book.lastPage) return null;
+    const remainingPages = Math.max(0, book.totalPages - book.lastPage);
+    if (remainingPages <= 0) return { minutes: 0, pages: 0 };
+    const wordsRemaining = remainingPages * 350;
+    const minutes = Math.ceil(wordsRemaining / READING_WPM);
+    return { minutes, pages: remainingPages };
+  }
+
+  function formatETA(ms) {
+    if (!ms || ms.minutes <= 0) return 'Concluído';
+    const h = Math.floor(ms.minutes / 60);
+    const m = ms.minutes % 60;
+    if (h > 0) return `~${h}h ${m}min`;
+    return `~${m}min`;
+  }
+
+  /* ============================================================
+     Grid de livros
+     ============================================================ */
+  function renderBooksGrid() {
+    const grid  = $('booksGrid');
+    const empty = $('emptyBooksMsg');
+    if (!grid) return;
+
+    const term = booksQuery.toLowerCase();
+    let list = booksData.filter(b => b.title.toLowerCase().includes(term));
+    if (booksFilter === 'lendo')     list = list.filter(b => b.lastRead && b.progress > 0 && b.progress < 100);
+    if (booksFilter === 'favoritos') list = list.filter(b => b.favorite);
+
+    if (!list.length) {
+      grid.innerHTML = '';
+      empty?.classList.remove('hidden');
+      return;
+    }
+    empty?.classList.add('hidden');
+
+    grid.innerHTML = list.map(book => {
+      const pct = book.totalPages ? Math.round((book.lastPage / book.totalPages) * 100) : 0;
+      const last = book.lastRead
+        ? new Date(book.lastRead).toLocaleDateString('pt-BR')
+        : 'Nunca lido';
+      const eta = estimateReadingTime(book);
+      const etaStr = eta && eta.minutes > 0 ? ` · ⏱️ ${formatETA(eta)}` : '';
+      const marksCount = (book.marks || []).length;
+      const coverHtml = book.cover
+        ? `<img src="${escHtml(book.cover)}" alt="Capa de ${escHtml(book.title)}">`
+        : '<span>📖</span>';
+      return `
+        <div class="book-card" data-bid="${book.id}">
+          <div class="book-cover">
+            ${coverHtml}
+            ${pct > 0 ? `<div class="book-cover-progress">
+              <div class="book-cover-pbar"><div class="book-cover-pfill" style="width:${pct}%"></div></div>
+            </div>` : ''}
+            ${book.offline ? `<div style="position:absolute;top:6px;right:6px;background:var(--les-coral);color:#2a0a1c;font-size:0.55rem;font-weight:800;padding:0.15rem 0.45rem;border-radius:10px;">📥 OFFLINE</div>` : ''}
+            ${book.pdfAusente ? `<div style="position:absolute;top:6px;left:6px;background:rgba(239,118,39,0.9);color:#fff;font-size:0.55rem;font-weight:800;padding:0.15rem 0.45rem;border-radius:10px;">⚠️ SEM PDF</div>` : ''}
+          </div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.3rem;">
+            <div class="book-title">${escHtml(book.title)}</div>
+            <button class="book-fav-btn" data-fav="${book.id}" title="Favorito">${book.favorite ? '❤️' : '🤍'}</button>
+          </div>
+          <div class="book-meta-small">${pct}% · ${book.totalPages || '?'} pág.${marksCount ? ` · 🔖 ${marksCount}` : ''}${etaStr}</div>
+          <div style="display:flex;gap:0.4rem;margin-top:0.5rem;">
+            ${book.pdfAusente
+              ? `<button class="poster-qbtn" style="font-size:0.7rem;padding:0.45rem 0.5rem;background:var(--les-orange);color:#2a0a1c;font-weight:800;" data-attach="${book.id}">📎 Anexar PDF</button>`
+              : `<button class="poster-qbtn" style="font-size:0.7rem;padding:0.45rem 0.5rem;" data-open="${book.id}">▶ Ler</button>`
+            }
+            <button class="poster-qbtn delete-btn" style="font-size:0.7rem;padding:0.45rem 0.5rem;" data-del="${book.id}">🗑️</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    grid.querySelectorAll('[data-open]').forEach(btn =>
+      btn.addEventListener('click', e => { e.stopPropagation(); openBookReader(+btn.dataset.open); }));
+    grid.querySelectorAll('[data-attach]').forEach(btn =>
+      btn.addEventListener('click', e => { e.stopPropagation(); openAttachPdfDialog(+btn.dataset.attach); }));
+    grid.querySelectorAll('[data-del]').forEach(btn =>
+      btn.addEventListener('click', e => { e.stopPropagation(); deleteBook(+btn.dataset.del); }));
+    grid.querySelectorAll('[data-fav]').forEach(btn =>
+      btn.addEventListener('click', e => { e.stopPropagation(); toggleBookFav(+btn.dataset.fav); }));
+    grid.querySelectorAll('.book-card').forEach(card =>
+      card.addEventListener('click', () => {
+        const id = +card.dataset.bid;
+        const book = booksData.find(b => b.id === id);
+        if (book && book.pdfAusente) {
+          openAttachPdfDialog(id);
+        } else {
+          openBookReader(id);
+        }
+      }));
+  }
+
+  async function deleteBook(id) {
+    if (!confirm('Excluir este livro permanentemente?\n\nIsso também remove os marcadores e a cópia offline.')) return;
+    booksData = booksData.filter(b => b.id !== id);
+    try { await idbDeletePdf(id); } catch (e) {}
+    try { await removeOfflineCopy(id); } catch (e) {}
+    try { localStorage.removeItem('cineario_pdf_' + id); } catch (e) {}
+    saveBooks();
+    renderBooksGrid();
+    if (bCurrentBookId === id) closeBookReader();
+    showCineToast('📖 Livro excluído');
+  }
+
+  function toggleBookFav(id) {
+    const b = booksData.find(b => b.id === id);
+    if (!b) return;
+    b.favorite = !b.favorite;
+    saveBooks();
+    renderBooksGrid();
+    showCineToast(b.favorite ? '❤️ Adicionado aos favoritos' : 'Removido dos favoritos');
+  }
+
+  /* ============================================================
+     Importação de PDF
+     ============================================================ */
+  $('fabBookImport')?.addEventListener('click', () => $('bookFileInput').click());
+
+  $('bookFileInput')?.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    for (const file of files) {
+      if (!file.type.includes('pdf')) {
+        showCineToast(`❌ ${file.name} não é um PDF`);
+        continue;
+      }
+      try {
+        showCineToast(`📥 Importando ${file.name}...`);
+        const reader = new FileReader();
+        const base64 = await new Promise((res, rej) => {
+          reader.onload = ev => res(ev.target.result.split(',')[1]);
+          reader.onerror = rej;
+          reader.readAsDataURL(file);
+        });
+
+        let title = file.name.replace(/\.pdf$/i, '').replace(/[_\-]/g, ' ');
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        const id = Date.now() + Math.floor(Math.random() * 1000);
+
+        await idbPutPdf(id, base64);
+
+        showCineToast(`🖼️ Extraindo capa de "${title}"...`);
+        const cover = await extractPdfCover(base64);
+
+        const newBook = {
+          id, title, lastPage: 1, lastSentenceIndex: 0,
+          lastRead: null, progress: 0, totalPages: 0,
+          favorite: false, offline: false, marks: [],
+          cover: cover || null,
+          pdfAusente: false,
+          added: new Date().toISOString()
+        };
+        booksData.push(newBook);
+        saveBooks();
+        renderBooksGrid();
+        showCineToast(cover ? `✅ "${title}" importado com capa!` : `✅ "${title}" importado!`);
+      } catch (err) {
+        console.error(err);
+        showCineToast(`❌ Erro ao importar ${file.name}: ${err.message || 'falha no armazenamento'}`);
+      }
+    }
+    e.target.value = '';
+  });
+
+  /* ============================================================
+     Abrir leitor
+     ============================================================ */
+  async function openBookReader(id, autoPlay = false, sentIdx = 0) {
+    const book = booksData.find(b => b.id === id);
+    if (!book) { showCineToast('❌ Livro não encontrado'); return; }
+
+    let base64 = null;
+    try { base64 = await idbGetPdf(id); } catch (e) {}
+    if (!base64) {
+      try { base64 = await getOfflineCopy(id); } catch (e) {}
+    }
+    if (!base64) {
+      try { base64 = localStorage.getItem('cineario_pdf_' + id); } catch (e) {}
+      if (base64) {
+        try {
+          await idbPutPdf(id, base64);
+          localStorage.removeItem('cineario_pdf_' + id);
+        } catch (e) {}
+      }
+    }
+
+    if (!base64) {
+      const bk = booksData.find(b => b.id === id);
+      if (bk) bk.pdfAusente = true;
+      saveBooks();
+      renderBooksGrid();
+      showCineToast('📎 Este livro não tem PDF anexado. Toque em "📎 Anexar PDF".', 3000);
+      return;
+    }
+
+    // PDF está presente — marca como OK
+    if (book.pdfAusente) {
+      book.pdfAusente = false;
+      saveBooks();
+    }
+
+    bCurrentBookId = id;
+    bCurrentPage   = book.lastPage || 1;
+    bCurSentIdx    = book.lastSentenceIndex || 0;
+
+    $('bookReaderTitle').textContent = book.title;
+    $('book-reader-view').classList.add('open');
+    document.querySelector('.tab-bar-ios')?.classList.add('hidden');
+
+    ['fabAddBtn','fabTelegramBtn','calendarNotifyBtn','fabBookImport'].forEach(id2 => {
+      const el = $(id2); if (el) el.classList.add('hidden');
+    });
+
+    updateMarksCount();
+    await updateOfflineButton();
+
+    try {
+      showCineToast('📖 Carregando...');
+      const data = atob(base64);
+      const arr  = new Uint8Array(data.length);
+      for (let i = 0; i < data.length; i++) arr[i] = data.charCodeAt(i);
+
+      if (bCurrentPdf) { bCurrentPdf.destroy(); bCurrentPdf = null; }
+      bCurrentPdf = await pdfjsLib.getDocument({ data: arr }).promise;
+      bTextPages  = new Array(bCurrentPdf.numPages).fill(null);
+
+      if (bCurrentPage > bCurrentPdf.numPages) bCurrentPage = 1;
+      $('book-page-input').max = bCurrentPdf.numPages;
+
+      book.totalPages = bCurrentPdf.numPages;
+      saveBooks();
+
+      await renderBookPage();
+      saveBPlayerState();
+      updateEtaButton();
+
+      if (autoPlay) {
+        setTimeout(() => { if (!bIsPlaying) startBTTS(); }, 300);
+      }
+    } catch (err) {
+      console.error(err);
+      showCineToast('❌ Erro ao carregar o PDF: ' + (err.message || 'arquivo corrompido'));
+      closeBookReader();
+    }
+  }
+
+  function closeBookReader() {
+    stopBTTS();
+    if (bCurrentPdf) { bCurrentPdf.destroy(); bCurrentPdf = null; }
+    $('book-reader-view').classList.remove('open');
+    $('book-marks-panel').classList.remove('open');
+    saveBProgressNow();
+    clearBPlayerState();
+
+    document.querySelector('.tab-bar-ios')?.classList.remove('hidden');
+
+    const activeTab = document.querySelector('.tab.active')?.dataset.tab || 'biblioteca';
+    const hideFabs = (activeTab === 'adicionar' || activeTab === 'calendario');
+    ['fabAddBtn','fabTelegramBtn','calendarNotifyBtn'].forEach(id2 => {
+      const el = $(id2);
+      if (el) el.classList.toggle('hidden', hideFabs);
+    });
+    $('fabBookImport')?.classList.toggle('hidden', activeTab !== 'livros');
+  }
+
+  async function renderBookPage() {
+    const token = ++bPageRenderToken;
+
+    if (bTextPages[bCurrentPage - 1] === null) {
+      try {
+        const page = await bCurrentPdf.getPage(bCurrentPage);
+        const tc   = await page.getTextContent();
+        if (token !== bPageRenderToken) return;
+        bTextPages[bCurrentPage - 1] = tc.items.map(i => i.str).join(' ');
+      } catch (e) {
+        console.error(e);
+        bTextPages[bCurrentPage - 1] = '';
+      }
+    }
+    if (token !== bPageRenderToken) return;
+
+    const content   = bTextPages[bCurrentPage - 1] || '';
+    const formatted = formatBookText(content);
+    $('bookPageContent').innerHTML = formatted;
+
+    applyMarksToPage();
+
+    $('bookPageInfo').textContent  = `${bCurrentPage} / ${bCurrentPdf.numPages}`;
+    $('book-page-input').value     = bCurrentPage;
+    $('bookScrollArea').scrollTop  = 0;
+    updateBookReadingBar();
+    saveBProgress();
+
+    bSentencesList = getBSentences();
+
+    if (bShouldResume && !bSentencesList.length && bCurrentPage < bCurrentPdf.numPages) {
+      changeBookPage(1, true);
+      return;
+    }
+
+    if (!bShouldResume) {
+      bCurSentIdx = Math.min(Math.max(bCurSentIdx, 0), Math.max(0, bSentencesList.length - 1));
+    }
+
+    if (bShouldResume) {
+      bShouldResume = false;
+      bCurSentIdx   = 0;
+      setTimeout(() => { if (token === bPageRenderToken) startBTTS(); }, 500);
+    }
+
+    updateBParaInfo();
+    updateEtaButton();
+
+    if (bCurrentPage < bCurrentPdf.numPages && bTextPages[bCurrentPage] === null) {
+      bCurrentPdf.getPage(bCurrentPage + 1).then(p =>
+        p.getTextContent().then(tc => {
+          if (bTextPages[bCurrentPage] === null)
+            bTextPages[bCurrentPage] = tc.items.map(i => i.str).join(' ');
+        })
+      ).catch(() => {});
+    }
+    saveBPlayerState();
+  }
+
+  function formatBookText(text) {
+    let pars = text.split(/\n\s*\n/);
+    if (pars.length <= 1) pars = text.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú])/);
+    return pars.map(p => `<p>${escHtml(p.trim())}</p>`).join('');
+  }
+
+  function changeBookPage(delta, fromTTS = false) {
+    if (!bCurrentPdf) return;
+    const next = bCurrentPage + delta;
+    if (next >= 1 && next <= bCurrentPdf.numPages) {
+      const wasPlaying = bIsPlaying;
+      window.speechSynthesis.cancel(); bSpeechToken++;
+      if (wasPlaying && !fromTTS) {
+        bIsPlaying = false;
+        $('bookPlayBtn').textContent = '▶';
+        stopBSilentAudio();
+      }
+      bShouldResume = fromTTS && wasPlaying;
+      bCurrentPage  = next;
+      bCurSentIdx   = 0;
+      renderBookPage();
+    } else if (next > bCurrentPdf.numPages) {
+      showCineToast('📖 Você chegou à última página');
+    } else {
+      showCineToast('Você está na primeira página');
+    }
+  }
+
+  function updateBookReadingBar() {
+    const area = $('bookScrollArea');
+    if (!area) return;
+    const sc = area.scrollHeight - area.clientHeight;
+    const pct = sc > 0 ? (area.scrollTop / sc) * 100 : 100;
+    $('bookReadingFill').style.width = Math.min(100, Math.max(0, pct)) + '%';
+  }
+
+  function updateEtaButton() {
+    const btn = $('bookEtaBtn');
+    const txt = $('bookEtaText');
+    if (!btn || !txt) return;
+    btn.disabled = false;
+    if (!bCurrentPdf) { txt.textContent = '—'; return; }
+    const remainingPages = Math.max(0, bCurrentPdf.numPages - bCurrentPage);
+    if (remainingPages === 0) { txt.textContent = 'Concluído'; return; }
+    const minutes = Math.ceil((remainingPages * 350) / READING_WPM);
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    txt.textContent = h > 0 ? `~${h}h ${m}min restantes` : `~${m}min restantes`;
+  }
+
+  /* ============================================================
+     OFFLINE
+     ============================================================ */
+  async function updateOfflineButton() {
+    const btn = $('bookOfflineBtn');
+    if (!btn || !bCurrentBookId) return;
+    const has = await hasOfflineCopy(bCurrentBookId);
+    const book = booksData.find(b => b.id === bCurrentBookId);
+    if (has || (book && book.offline)) {
+      btn.classList.add('offline-ok');
+      btn.innerHTML = '✅ Offline salvo';
+    } else {
+      btn.classList.remove('offline-ok');
+      btn.innerHTML = '📥 Salvar offline';
+    }
+  }
+
+  $('bookOfflineBtn')?.addEventListener('click', async () => {
+    if (!bCurrentBookId) return;
+    const btn = $('bookOfflineBtn');
+    try {
+      btn.textContent = '⏳ Salvando...';
+      let base64 = await idbGetPdf(bCurrentBookId);
+      if (!base64) throw new Error('PDF não encontrado no IndexedDB');
+      await saveOfflineCopy(bCurrentBookId, base64);
+      const book = booksData.find(b => b.id === bCurrentBookId);
+      if (book) { book.offline = true; saveBooks(); }
+      await updateOfflineButton();
+      showCineToast('✅ Disponível offline!', 2000);
+    } catch (e) {
+      console.error(e);
+      showCineToast('❌ Falha ao salvar offline', 2500);
+      btn.innerHTML = '📥 Salvar offline';
+    }
+  });
+
+  /* ============================================================
+     MARCADORES
+     ============================================================ */
+  function updateMarksCount() {
+    const badge = $('bookMarksCount');
+    if (!badge || !bCurrentBookId) return;
+    const book = booksData.find(b => b.id === bCurrentBookId);
+    const count = book ? (book.marks || []).length : 0;
+    badge.textContent = String(count);
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
+  }
+
+  $('bookMarkPageBtn')?.addEventListener('click', () => {
+    if (!bCurrentBookId || !bCurrentPdf) return;
+    const book = booksData.find(b => b.id === bCurrentBookId);
+    if (!book) return;
+    if (!Array.isArray(book.marks)) book.marks = [];
+
+    const already = book.marks.find(m => m.type === 'page' && m.page === bCurrentPage);
+    if (already) { showCineToast('🔖 Página já marcada', 1500); return; }
+    const text = (bTextPages[bCurrentPage - 1] || '').slice(0, 200);
+    book.marks.push({
+      id: 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      type: 'page', page: bCurrentPage, text,
+      color: 'coral', note: '', createdAt: Date.now()
+    });
+    saveBooks();
+    updateMarksCount();
+    renderMarksList();
+    showCineToast(`🔖 Página ${bCurrentPage} marcada`);
+  });
+
+  $('bookOpenMarksBtn')?.addEventListener('click', () => {
+    $('book-marks-panel').classList.add('open');
+    renderMarksList();
+  });
+  $('bookMarksClose')?.addEventListener('click', () => {
+    $('book-marks-panel').classList.remove('open');
+  });
+
+  document.querySelectorAll('.book-marks-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.book-marks-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      bMarksFilter = tab.dataset.bmtab;
+      renderMarksList();
+    });
+  });
+
+  function renderMarksList() {
+    const list = $('bookMarksList');
+    if (!list || !bCurrentBookId) return;
+    const book = booksData.find(b => b.id === bCurrentBookId);
+    if (!book) { list.innerHTML = ''; return; }
+    let marks = [...(book.marks || [])];
+
+    if (bMarksFilter === 'paginas')    marks = marks.filter(m => m.type === 'page');
+    if (bMarksFilter === 'notas')      marks = marks.filter(m => m.type === 'note');
+    if (bMarksFilter === 'destaques')  marks = marks.filter(m => m.type === 'highlight');
+
+    marks.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    if (!marks.length) {
+      list.innerHTML = `<div class="book-marks-empty">
+        ${bMarksFilter === 'todos'
+          ? 'Nenhum marcador ainda.<br>Use 🔖 para marcar páginas ou selecione texto para destacar/anotar.'
+          : 'Nenhum item nesta categoria.'}
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = marks.map(m => {
+      const date = new Date(m.createdAt).toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      });
+      const colorClass = m.color && m.color.startsWith('c-') ? m.color : 'c-note';
+      const icon = m.type === 'page' ? '🔖' : (m.type === 'note' ? '✏️' : '🖍️');
+      const label = m.type === 'page' ? 'Página marcada' : (m.type === 'note' ? 'Anotação' : 'Destaque');
+      return `<div class="book-mark-item ${colorClass}" data-mark-id="${m.id}">
+        <div class="book-mark-head">
+          <span class="book-mark-page">${icon} Pág. ${m.page} · ${label}</span>
+          <span class="book-mark-date">${date}</span>
+        </div>
+        ${m.text ? `<div class="book-mark-text">"${escHtml(m.text.slice(0, 220))}"</div>` : ''}
+        ${m.note ? `<div class="book-mark-note">💬 ${escHtml(m.note)}</div>` : ''}
+        <div class="book-mark-actions">
+          <button data-go-page="${m.page}">📖 Ir para página</button>
+          <button class="danger" data-del-mark="${m.id}">🗑️ Excluir</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('[data-go-page]').forEach(b => b.addEventListener('click', () => {
+      const p = parseInt(b.dataset.goPage);
+      if (p && bCurrentPdf && p >= 1 && p <= bCurrentPdf.numPages) {
+        bCurrentPage = p;
+        bCurSentIdx = 0;
+        renderBookPage();
+        $('book-marks-panel').classList.remove('open');
+        showCineToast(`📖 Indo para página ${p}`);
+      }
+    }));
+
+    list.querySelectorAll('[data-del-mark]').forEach(b => b.addEventListener('click', () => {
+      const mid = b.dataset.delMark;
+      if (!confirm('Excluir este marcador?')) return;
+      const b2 = booksData.find(x => x.id === bCurrentBookId);
+      if (!b2) return;
+      b2.marks = (b2.marks || []).filter(m => m.id !== mid);
+      saveBooks();
+      updateMarksCount();
+      renderMarksList();
+      applyMarksToPage();
+      showCineToast('🗑️ Marcador excluído');
+    }));
+  }
+
+  /* ============================================================
+     SELEÇÃO → destaque / anotação
+     ============================================================ */
+  function getSelectionInfo() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return null;
+    const text = sel.toString().trim();
+    if (!text || text.length < 2) return null;
+    const range = sel.getRangeAt(0);
+    const container = $('bookPageContent');
+    if (!container || !container.contains(range.commonAncestorContainer)) return null;
+    return { text, range };
+  }
+
+  function showSelectionMenu(rect) {
+    const menu = $('book-selection-menu');
+    if (!menu) return;
+    const reader = $('book-reader-view').getBoundingClientRect();
+    menu.style.left = Math.max(8, rect.left - reader.left + rect.width / 2 - 90) + 'px';
+    menu.style.top  = Math.max(8, rect.top - reader.top - 60) + 'px';
+    menu.classList.add('show');
+  }
+
+  function hideSelectionMenu() { $('book-selection-menu')?.classList.remove('show'); }
+
+  let _selDebounce = null;
+  document.addEventListener('selectionchange', () => {
+    if (!$('book-reader-view').classList.contains('open')) return;
+    clearTimeout(_selDebounce);
+    _selDebounce = setTimeout(() => {
+      const info = getSelectionInfo();
+      if (!info) { hideSelectionMenu(); return; }
+      const rect = info.range.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) return;
+      showSelectionMenu(rect);
+    }, 180);
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    if (!e.target.closest('#book-selection-menu') && !e.target.closest('#bookPageContent')) {
+      hideSelectionMenu();
+    }
+  });
+
+  document.querySelectorAll('#book-selection-menu button').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const color = btn.dataset.markColor;
+      const info = getSelectionInfo();
+      if (!info) { hideSelectionMenu(); return; }
+      if (color === 'note') {
+        openNotePopover(info.text);
+      } else {
+        await saveHighlight(info.text, color, '');
+      }
+      hideSelectionMenu();
+      window.getSelection()?.removeAllRanges();
+    });
+  });
+
+  async function saveHighlight(text, color, note) {
+    if (!bCurrentBookId) return;
+    const book = booksData.find(b => b.id === bCurrentBookId);
+    if (!book) return;
+    if (!Array.isArray(book.marks)) book.marks = [];
+    book.marks.push({
+      id: 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      type: note ? 'note' : 'highlight',
+      page: bCurrentPage,
+      text: text.slice(0, 500),
+      color: 'c-' + color,
+      note: note || '',
+      createdAt: Date.now()
+    });
+    saveBooks();
+    updateMarksCount();
+    renderMarksList();
+    applyMarksToPage();
+    showCineToast(note ? '✏️ Anotação salva' : `🖍️ Destaque ${color} aplicado`);
+  }
+
+  function openNotePopover(quote) {
+    bPendingNoteText = quote;
+    $('bookNoteQuote').textContent = `"${quote.slice(0, 300)}"`;
+    $('bookNoteText').value = '';
+    bCurrentNoteColor = 'yellow';
+    document.querySelectorAll('.book-color-dot').forEach(d => {
+      d.classList.toggle('active', d.dataset.noteColor === 'yellow');
+    });
+    $('book-note-popover').classList.add('open');
+    setTimeout(() => $('bookNoteText').focus(), 150);
+  }
+  function closeNotePopover() {
+    $('book-note-popover').classList.remove('open');
+    bPendingNoteText = '';
+  }
+  document.querySelectorAll('.book-color-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      document.querySelectorAll('.book-color-dot').forEach(d => d.classList.remove('active'));
+      dot.classList.add('active');
+      bCurrentNoteColor = dot.dataset.noteColor;
+    });
+  });
+  $('bookNoteCancel')?.addEventListener('click', closeNotePopover);
+  $('bookNoteSave')?.addEventListener('click', async () => {
+    const note = $('bookNoteText').value.trim();
+    if (!note) { showCineToast('⚠️ Escreva algo na anotação'); return; }
+    await saveHighlight(bPendingNoteText, bCurrentNoteColor, note);
+    closeNotePopover();
+  });
+  $('book-note-popover')?.addEventListener('click', (e) => {
+    if (e.target === $('book-note-popover')) closeNotePopover();
+  });
+
+  function applyMarksToPage() {
+    if (!bCurrentBookId || !bCurrentPdf) return;
+    const book = booksData.find(b => b.id === bCurrentBookId);
+    if (!book || !Array.isArray(book.marks)) return;
+    const marks = book.marks.filter(m => m.page === bCurrentPage && m.text && (m.type === 'highlight' || m.type === 'note'));
+    if (!marks.length) return;
+    const container = $('bookPageContent');
+    if (!container) return;
+
+    marks.forEach(m => {
+      const needle = m.text.trim();
+      if (!needle) return;
+      container.querySelectorAll('p').forEach(p => {
+        const pos = p.textContent.indexOf(needle);
+        if (pos === -1) return;
+        if (p.querySelector('.book-user-mark[data-mark-id="' + m.id + '"]')) return;
+        const tn = p.firstChild;
+        if (!tn || tn.nodeType !== Node.TEXT_NODE) return;
+        const before = p.textContent.slice(0, pos);
+        const after  = p.textContent.slice(pos + needle.length);
+        const span   = document.createElement('span');
+        span.className = 'book-user-mark ' + (m.color || 'c-yellow');
+        span.dataset.markId = m.id;
+        span.textContent = needle;
+        span.title = m.note ? `💬 ${m.note}` : 'Clique para ver no painel';
+        span.addEventListener('click', () => {
+          $('book-marks-panel').classList.add('open');
+          renderMarksList();
+        });
+        p.textContent = '';
+        if (before) p.appendChild(document.createTextNode(before));
+        p.appendChild(span);
+        if (after) p.appendChild(document.createTextNode(after));
+      });
+    });
+  }
+
+  /* ============================================================
+     TTS
+     ============================================================ */
+  function getBSentences() {
+    const txt = bTextPages[bCurrentPage - 1] || '';
+    let sents = txt.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ú"'\d])/);
+    if (sents.length <= 1) sents = txt.split(/(?<=[.!?])\s+/);
+    return sents.filter(s => s.trim().length > 5);
+  }
+
+  function updateBParaInfo() {
+    const total = getBSentences().length;
+    const cur   = total ? Math.min(bCurSentIdx + 1, total) : 0;
+    const el    = $('book-para-info');
+    if (el) el.textContent = `¶ ${cur} / ${total}`;
+  }
+
+  function bHighlight(idx) {
+    const content = $('bookPageContent');
+    if (!content) return;
+    const sents = getBSentences();
+    if (idx >= sents.length) return;
+    bClearHighlights();
+    const target = sents[idx].trim();
+    for (const p of content.querySelectorAll('p')) {
+      const pos = p.textContent.indexOf(target);
+      if (pos === -1) continue;
+      const tn = p.firstChild;
+      if (!tn || tn.nodeType !== Node.TEXT_NODE) continue;
+      const before = p.textContent.slice(0, pos);
+      const after  = p.textContent.slice(pos + target.length);
+      const span   = document.createElement('span');
+      span.className = 'book-tts-highlight';
+      span.textContent = target;
+      p.textContent = '';
+      if (before) p.appendChild(document.createTextNode(before));
+      p.appendChild(span);
+      if (after) p.appendChild(document.createTextNode(after));
+      span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    }
+  }
+
+  function bClearHighlights() {
+    const c = $('bookPageContent');
+    if (!c) return;
+    c.querySelectorAll('.book-tts-highlight').forEach(s =>
+      s.replaceWith(document.createTextNode(s.textContent)));
+    c.normalize();
+  }
+
+  function toggleBTTS() {
+    if (bIsPlaying) stopBTTS();
+    else startBTTS();
+  }
+
+  function stopBTTS() {
+    window.speechSynthesis.cancel();
+    bIsPlaying = false;
+    $('bookPlayBtn').textContent = '▶';
+    stopBSilentAudio();
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+    bShouldResume = false;
+    saveBPlayerState();
+  }
+
+  function startBTTS() {
+    bSpeechToken++;
+    bSentencesList = getBSentences();
+    if (!bSentencesList.length) { showCineToast('Nenhum texto disponível'); return; }
+    bIsPlaying = true;
+    $('bookPlayBtn').textContent = '⏸';
+    startBSilentAudio();
+
+    if ('mediaSession' in navigator && typeof navigator.mediaSession.setActionHandler === 'function') {
+      try {
+        navigator.mediaSession.playbackState = 'playing';
+        const b = booksData.find(x => x.id === bCurrentBookId);
+        if (b && typeof MediaMetadata !== 'undefined') {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: b.title, artist: 'CINEÁRIO', album: 'Livro'
+          });
+        }
+        navigator.mediaSession.setActionHandler('play', () => { if (!bIsPlaying) startBTTS(); });
+        navigator.mediaSession.setActionHandler('pause', stopBTTS);
+        navigator.mediaSession.setActionHandler('nexttrack', () => changeBookPage(1));
+        navigator.mediaSession.setActionHandler('previoustrack', () => changeBookPage(-1));
+      } catch (e) {}
+    }
+
+    if (!Number.isInteger(bCurSentIdx) || bCurSentIdx < 0 || bCurSentIdx >= bSentencesList.length) bCurSentIdx = 0;
+    bSpeakCurrent();
+    saveBPlayerState();
+  }
+
+  function bSpeakCurrent() {
+    if (!bIsPlaying) return;
+    const myToken = bSpeechToken;
+    if (bCurSentIdx >= bSentencesList.length) return;
+
+    const sentence = bSentencesList[bCurSentIdx];
+    if (!sentence || sentence.trim().length < 3) {
+      bCurSentIdx++;
+      if (myToken === bSpeechToken) setTimeout(bSpeakCurrent, 0);
+      return;
+    }
+
+    bHighlight(bCurSentIdx);
+    updateBParaInfo();
+
+    const utt = new SpeechSynthesisUtterance(sentence.trim());
+    utt.lang  = 'pt-BR';
+    utt.rate  = parseFloat($('book-tts-speed')?.value || 0.85);
+
+    utt.onend = () => {
+      if (myToken !== bSpeechToken || !bIsPlaying) return;
+      bCurSentIdx++;
+      updateBParaInfo();
+      saveBPlayerState();
+
+      if (bCurSentIdx < bSentencesList.length) {
+        setTimeout(bSpeakCurrent, 0);
+      } else if (bCurrentPdf && bCurrentPage < bCurrentPdf.numPages) {
+        bShouldResume = true;
+        changeBookPage(1, true);
+      } else {
+        showCineToast('📖 Fim do livro!');
+        stopBTTS();
+      }
+    };
+    utt.onerror = (e) => {
+      if (e.error === 'interrupted' || e.error === 'canceled') return;
+      if (myToken === bSpeechToken && bIsPlaying) {
+        bCurSentIdx++;
+        setTimeout(bSpeakCurrent, 100);
+      }
+    };
+    window.speechSynthesis.speak(utt);
+  }
+
+  function changeBSentence(delta) {
+    if (!bCurrentPdf) return;
+    const sents = getBSentences();
+    if (!sents.length) return;
+    const target = bCurSentIdx + delta;
+    if (target >= 0 && target < sents.length) {
+      bCurSentIdx    = target;
+      bSentencesList = sents;
+      updateBParaInfo();
+      saveBPlayerState();
+      if (bIsPlaying) {
+        bSpeechToken++;
+        window.speechSynthesis.cancel();
+        setTimeout(() => { if (bIsPlaying) bSpeakCurrent(); }, 50);
+      } else {
+        bHighlight(bCurSentIdx);
+      }
+      return;
+    }
+    if (delta > 0 && bCurrentPage < bCurrentPdf.numPages) {
+      const wp = bIsPlaying;
+      window.speechSynthesis.cancel(); bSpeechToken++;
+      if (wp) { bIsPlaying = false; $('bookPlayBtn').textContent = '▶'; stopBSilentAudio(); }
+      bCurrentPage++; bCurSentIdx = 0; bShouldResume = false; renderBookPage();
+    } else if (delta < 0 && bCurrentPage > 1) {
+      const wp = bIsPlaying;
+      window.speechSynthesis.cancel(); bSpeechToken++;
+      if (wp) { bIsPlaying = false; $('bookPlayBtn').textContent = '▶'; stopBSilentAudio(); }
+      bCurrentPage--; bShouldResume = false;
+      renderBookPage().then(() => {
+        const ps = getBSentences();
+        bCurSentIdx = Math.max(0, ps.length - 1);
+        bSentencesList = ps; updateBParaInfo(); bHighlight(bCurSentIdx); saveBPlayerState();
+      });
+    }
+  }
+
+  /* ---------- Áudio silencioso ---------- */
+  function startBSilentAudio() {
+    if (bAudioCtx) return;
+    try {
+      bAudioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+      const buf  = bAudioCtx.createBuffer(1, bAudioCtx.sampleRate, bAudioCtx.sampleRate);
+      bSilentSrc = bAudioCtx.createBufferSource();
+      bSilentSrc.buffer = buf; bSilentSrc.loop = true;
+      bSilentSrc.connect(bAudioCtx.destination); bSilentSrc.start(0);
+    } catch (e) {}
+  }
+  function stopBSilentAudio() {
+    try {
+      if (bSilentSrc) { bSilentSrc.stop(); bSilentSrc.disconnect(); bSilentSrc = null; }
+      if (bAudioCtx) { bAudioCtx.close(); bAudioCtx = null; }
+    } catch (e) {}
+  }
+
+  /* ---------- Progresso ---------- */
+  function saveBProgress() {
+    clearTimeout(bSaveTimeout);
+    bSaveTimeout = setTimeout(() => {
+      if (bCurrentBookId && bCurrentPdf) {
+        const b = booksData.find(x => x.id === bCurrentBookId);
+        if (b) {
+          b.lastPage = bCurrentPage;
+          b.lastSentenceIndex = bCurSentIdx;
+          b.lastRead = new Date().toISOString();
+          b.progress = Math.round((bCurrentPage / bCurrentPdf.numPages) * 100);
+          b.totalPages = bCurrentPdf.numPages;
+          saveBooks();
+          renderBooksGrid();
+        }
+      }
+    }, 1500);
+  }
+
+  function saveBProgressNow() {
+    if (bCurrentBookId && bCurrentPdf) {
+      const b = booksData.find(x => x.id === bCurrentBookId);
+      if (b) {
+        b.lastPage = bCurrentPage;
+        b.lastSentenceIndex = bCurSentIdx;
+        b.lastRead = new Date().toISOString();
+        b.progress = Math.round((bCurrentPage / bCurrentPdf.numPages) * 100);
+        b.totalPages = bCurrentPdf.numPages;
+        saveBooks();
+      }
+    }
+  }
+
+  function saveBPlayerState() {
+    if (bCurrentBookId) {
+      localStorage.setItem(BPLAYER_KEY, JSON.stringify({
+        bookId: bCurrentBookId, page: bCurrentPage,
+        sentenceIndex: bCurSentIdx, isPlaying: bIsPlaying, ts: Date.now()
+      }));
+    }
+  }
+  function clearBPlayerState() { localStorage.removeItem(BPLAYER_KEY); }
+
+  async function restoreBPlayerState() {
+    try {
+      const saved = localStorage.getItem(BPLAYER_KEY);
+      if (!saved) return;
+      const state = JSON.parse(saved);
+      if (!state?.bookId) return;
+      const book = booksData.find(b => b.id === state.bookId);
+      if (!book) { clearBPlayerState(); return; }
+      if (book.pdfAusente) return; // não abre leitor se PDF estiver ausente
+      book.lastPage = state.page || book.lastPage;
+      await openBookReader(state.bookId, state.isPlaying, state.sentenceIndex || 0);
+    } catch (e) {}
+  }
+
+  /* ---------- Bind eventos do leitor ---------- */
+  $('bookReaderClose')?.addEventListener('click', closeBookReader);
+  $('bookPlayBtn')?.addEventListener('click', toggleBTTS);
+  $('bookPrevPage')?.addEventListener('click', () => changeBookPage(-1));
+  $('bookNextPage')?.addEventListener('click', () => changeBookPage(1));
+  $('bookPrevSentence')?.addEventListener('click', () => changeBSentence(-1));
+  $('bookNextSentence')?.addEventListener('click', () => changeBSentence(1));
+
+  $('bookScrollArea')?.addEventListener('scroll', updateBookReadingBar);
+
+  $('book-page-input')?.addEventListener('change', (e) => {
+    if (!bCurrentPdf) return;
+    const p = parseInt(e.target.value);
+    if (p >= 1 && p <= bCurrentPdf.numPages) {
+      if (bIsPlaying) {
+        window.speechSynthesis.cancel(); bSpeechToken++;
+        bIsPlaying = false; $('bookPlayBtn').textContent = '▶';
+        stopBSilentAudio();
+      }
+      bShouldResume = false; bCurrentPage = p; renderBookPage();
+    } else {
+      e.target.value = bCurrentPage;
+    }
+  });
+
+  $('book-tts-speed')?.addEventListener('input', () => {
+    const v = parseFloat($('book-tts-speed').value).toFixed(2);
+    $('book-speed-val').textContent = `${v}×`;
+  });
+
+  window.addEventListener('beforeunload', () => { if (bCurrentBookId) saveBPlayerState(); });
+
+  /* ============================================================
+     BACKUP DE LIVROS (metadados + capas, SEM PDFs)
+     ============================================================ */
+  const BOOKS_BACKUP_APP = 'CINEÁRIO';
+  const BOOKS_BACKUP_TIPO = 'Livros do CINEÁRIO';
+  const BOOKS_BACKUP_VERSION = '1.0';
+
+  function exportBooksBackup() {
+    if (!booksData.length) {
+      showCineToast('📭 Nenhum livro para exportar');
+      return;
+    }
+    const backup = {
+      app: BOOKS_BACKUP_APP,
+      tipo: BOOKS_BACKUP_TIPO,
+      version: BOOKS_BACKUP_VERSION,
+      exportedAt: new Date().toISOString(),
+      totalLivros: booksData.length,
+      livros: booksData.map(b => ({
+        id: b.id,
+        title: b.title,
+        lastPage: b.lastPage,
+        lastSentenceIndex: b.lastSentenceIndex,
+        lastRead: b.lastRead,
+        progress: b.progress,
+        totalPages: b.totalPages,
+        favorite: !!b.favorite,
+        offline: false,
+        marks: b.marks || [],
+        cover: b.cover || null,
+        added: b.added || null,
+        pdfAusente: true
+      }))
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CINEARIO_Livros_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showCineToast(`📤 ${booksData.length} livro(s) exportado(s) (sem PDFs)`, 2800);
+  }
+
+  function importBooksBackup(file) {
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const backup = JSON.parse(ev.target.result);
+        if (!backup || !Array.isArray(backup.livros)) {
+          throw new Error('Formato inválido');
+        }
+        if (!confirm(
+          `📥 Baixar Livros do CINEÁRIO?\n\n` +
+          `Isso irá importar ${backup.livros.length} livro(s) e substituir a biblioteca de livros atual.\n\n` +
+          `⚠️ Os PDFs NÃO vêm no arquivo — depois você precisará anexar cada PDF manualmente.`
+        )) return;
+
+        for (const old of booksData) {
+          try { await idbDeletePdf(old.id); } catch (e) {}
+          try { await removeOfflineCopy(old.id); } catch (e) {}
+        }
+
+        booksData = backup.livros.map(b => ({
+          id: b.id || (Date.now() + Math.floor(Math.random() * 1000)),
+          title: b.title || 'Sem título',
+          lastPage: b.lastPage || 1,
+          lastSentenceIndex: b.lastSentenceIndex || 0,
+          lastRead: b.lastRead || null,
+          progress: b.progress || 0,
+          totalPages: b.totalPages || 0,
+          favorite: !!b.favorite,
+          offline: false,
+          marks: Array.isArray(b.marks) ? b.marks : [],
+          cover: b.cover || null,
+          added: b.added || new Date().toISOString(),
+          pdfAusente: true
+        }));
+
+        saveBooks();
+        renderBooksGrid();
+        showCineToast(
+          `✅ ${booksData.length} livro(s) restaurado(s)! Anexe os PDFs individualmente.`,
+          4000
+        );
+      } catch (err) {
+        console.error(err);
+        showCineToast('❌ Arquivo inválido ou corrompido', 2500);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  /* ---------- Anexar PDF a um livro existente ---------- */
+  let _pendingAttachBookId = null;
+
+  function openAttachPdfDialog(bookId) {
+    _pendingAttachBookId = bookId;
+    const el = $('attachPdfInput');
+    if (!el) return;
+    el.value = '';
+    el.click();
+  }
+
+  $('attachPdfInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file || !_pendingAttachBookId) return;
+    if (!file.type.includes('pdf')) {
+      showCineToast('❌ Selecione um arquivo PDF');
+      _pendingAttachBookId = null;
+      return;
+    }
+    const bookId = _pendingAttachBookId;
+    _pendingAttachBookId = null;
+
+    try {
+      showCineToast(`📎 Anexando ${file.name}...`);
+      const reader = new FileReader();
+      const base64 = await new Promise((res, rej) => {
+        reader.onload = ev => res(ev.target.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+
+      await idbPutPdf(bookId, base64);
+
+      const book = booksData.find(b => b.id === bookId);
+      if (book) {
+        book.pdfAusente = false;
+        if (!book.cover) {
+          showCineToast('🖼️ Extraindo capa...');
+          const cover = await extractPdfCover(base64);
+          if (cover) book.cover = cover;
+        }
+        saveBooks();
+      }
+      renderBooksGrid();
+      showCineToast('✅ PDF anexado com sucesso!', 2200);
+    } catch (err) {
+      console.error(err);
+      showCineToast('❌ Falha ao anexar PDF', 2500);
+    }
+    e.target.value = '';
+  });
+
+  /* ---------- Bind dos botões de backup ---------- */
+  $('exportBooksBtn')?.addEventListener('click', exportBooksBackup);
+  $('importBooksBtn')?.addEventListener('click', () => $('importBooksFileInput').click());
+  $('importBooksFileInput')?.addEventListener('change', (e) => {
+    if (e.target.files.length) importBooksBackup(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  /* ---------- Chips de filtro ---------- */
+  document.querySelectorAll('[data-bfilter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      booksFilter = btn.dataset.bfilter;
+      document.querySelectorAll('[data-bfilter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderBooksGrid();
+    });
+  });
+
+  $('booksSearchInput')?.addEventListener('input', (e) => {
+    booksQuery = e.target.value;
+    renderBooksGrid();
+  });
+
+  /* ---------- Init ---------- */
+  (async function initBooks() {
+    loadBooks();
+    try {
+      await openBooksDB();
+      console.log('✅ IndexedDB de PDFs pronto');
+    } catch (e) {
+      console.warn('⚠️ IndexedDB indisponível:', e);
+    }
+    renderBooksGrid();
+    const spdVal = $('book-tts-speed')?.value || '0.85';
+    if ($('book-speed-val')) $('book-speed-val').textContent = `${parseFloat(spdVal).toFixed(2)}×`;
+    setTimeout(() => restoreBPlayerState(), 600);
+    console.log(`📚 Módulo de Livros v5 iniciado — ${booksData.length} livro(s)`);
+  })();
 })();
 </script>
 </body>
