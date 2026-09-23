@@ -1918,9 +1918,7 @@
 
       let added = 0;
       let filled = 0;
-      let updated = 0;
       const filledNames = [];
-      const updatedNames = [];
 
       for (const raw of backup.items) {
         const seedId = String(raw.id || "");
@@ -1938,64 +1936,26 @@
         const remote = remoteById.get(String(local.id)) || remoteByName.get(norm(local.nome));
         if (!remote) continue;
         let touched = false;
-        let wasUpdate = false;
-
-        const localUrl  = (local.url  || "").trim();
-        const remoteUrl = (remote.url || "").trim();
-        const isYouTube = (u) => /youtube\.com|youtu\.be/i.test(u);
-
-        if (remoteUrl && isYouTube(remoteUrl) && localUrl !== remoteUrl) {
-          const origem = platformFromUrl(localUrl) || (local.platform || "").trim() || "Sem link";
-          wasUpdate = !!localUrl;
-          if (wasUpdate) {
-            updatedNames.push(`${local.nome} (${origem}→YouTube)`);
-          }
-          local.url = remoteUrl;
-          local.platform = "YouTube";
-          touched = true;
-        } else if (!localUrl && remoteUrl) {
-          local.url = remoteUrl;
-          const detected = platformFromUrl(remoteUrl);
-          if (detected) local.platform = detected;
-          touched = true;
-        }
-
-        for (const field of ["trailer", "ost"]) {
-          const localVal  = (local[field]  || "").trim();
+        for (const field of ["url", "trailer", "ost"]) {
+          const localVal = (local[field] || "").trim();
           const remoteVal = (remote[field] || "").trim();
           if (!localVal && remoteVal) { local[field] = remoteVal; touched = true; }
         }
-
         if (touched) {
           local.updatedAt = Date.now();
-          if (wasUpdate) {
-            updated++;
-          } else {
-            filled++;
-            filledNames.push(local.nome);
-          }
+          filled++;
+          filledNames.push(local.nome);
         }
       }
 
-      if (added > 0 || filled > 0 || updated > 0) await persist();
+      if (added > 0 || filled > 0) await persist();
 
-      const buildResumo = (names) => {
-        const resumo = names.slice(0, 3).join(", ");
-        const extra = names.length > 3 ? ` +${names.length - 3}` : "";
-        return `${resumo}${extra}`;
-      };
-
-      const partes = [];
-      if (added > 0)   partes.push(`✨ ${added} novo(s)`);
-      if (filled > 0)  partes.push(`🔗 ${filled} link(s)`);
-      if (updated > 0) partes.push(`♻️ ${updated} atualizado(s)`);
-
-      if (partes.length) {
-        const detalhes = [];
-        if (filled > 0)  detalhes.push(`🔗 ${buildResumo(filledNames)}`);
-        if (updated > 0) detalhes.push(`♻️ ${buildResumo(updatedNames)}`);
-        const sufixo = detalhes.length ? ` — ${detalhes.join(" | ")}` : "";
-        showToast(partes.join(" + ") + sufixo, 4200);
+      if (added > 0 && filled > 0) showToast(`✨ ${added} novo(s) + 🔗 ${filled} link(s)`, 3400);
+      else if (added > 0) showToast(`✨ ${added} novo(s) título(s)!`, 3000);
+      else if (filled > 0) {
+        const resumo = filledNames.slice(0, 3).join(", ");
+        const extra = filledNames.length > 3 ? ` +${filledNames.length - 3}` : "";
+        showToast(`🔗 ${filled} link(s): ${resumo}${extra}`, 3400);
       }
     } catch (e) {
       if (e.name === "AbortError") console.warn("Merge: timeout");
