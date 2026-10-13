@@ -1952,9 +1952,9 @@
 
   const DB_NAME = "cinearioDB", DB_VERSION = 2, STORE = "items";
   const OLD_KEY = "cinearioItems";
-  // Nome estável primeiro: suba sempre o backup novo como "cineario_backup.json".
+  // Nome estável primeiro: suba sempre o backup novo como "cineario_backup_2026-09-09T14-59-14".
   // O nome antigo (com data) fica como fallback para não quebrar hospedagens atuais.
-  const SEED_URLS = ["cineario_backup.json", "cineario_backup_2026-09-09T14-59-14.json"];
+  const SEED_URLS = ["cineario_backup_2026-09-09T14-59-14", "cineario_backup_2026-09-09T14-59-14.json"];
   const SEED_SYNC_KEY = "cinearioSeedSync";
   const SEED_CHECK_EVERY = 5 * 60 * 1000;
   const SEEN_SEED_IDS_KEY = "cinearioSeenSeedIds";
