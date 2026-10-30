@@ -2,7 +2,7 @@
   "app": "CINEÁRIO",
   "tipo": "Diário do CINEÁRIO",
   "version": "3.0",
-  "exportedAt": "2026-10-15T11:42:50.631Z",
+  "exportedAt": "2026-10-30T16:49:14.625Z",
   "items": [
     {
       "id": "1776740712177-gmwiqb",
@@ -101,9 +101,7 @@
       "favorite": false,
       "category": "",
       "watchedAt": null,
-      "clicks": [
-        1789653367592
-      ],
+      "clicks": [],
       "progressUpdatedAt": null,
       "createdAt": 1788883879661,
       "updatedAt": 1789132820445
@@ -408,7 +406,6 @@
       "category": "",
       "watchedAt": null,
       "clicks": [
-        1790161819387,
         1791987035748,
         1791987666603
       ],
@@ -513,9 +510,7 @@
       "favorite": false,
       "category": "",
       "watchedAt": null,
-      "clicks": [
-        1790160542954
-      ],
+      "clicks": [],
       "progressUpdatedAt": null,
       "createdAt": 1790160482369,
       "updatedAt": 1790160574601
@@ -640,7 +635,9 @@
       "favorite": false,
       "category": "",
       "watchedAt": null,
-      "clicks": [],
+      "clicks": [
+        1793378559825
+      ],
       "progressUpdatedAt": null,
       "createdAt": 1792064231976,
       "updatedAt": 1792064231976
@@ -1016,8 +1013,6 @@
       "category": "",
       "watchedAt": null,
       "clicks": [
-        1790169919256,
-        1790174158946,
         1791986125245
       ],
       "progressUpdatedAt": null,
@@ -1045,7 +1040,6 @@
       "category": "",
       "watchedAt": null,
       "clicks": [
-        1789653441655,
         1791888603145
       ],
       "progressUpdatedAt": null,
@@ -1447,9 +1441,7 @@
       "favorite": true,
       "category": "assistidos",
       "watchedAt": null,
-      "clicks": [
-        1790161731434
-      ],
+      "clicks": [],
       "progressUpdatedAt": null,
       "createdAt": 1787194766667,
       "updatedAt": 1790161743025
@@ -1549,9 +1541,7 @@
       "favorite": true,
       "category": "assistidos",
       "watchedAt": null,
-      "clicks": [
-        1790161617186
-      ],
+      "clicks": [],
       "progressUpdatedAt": null,
       "createdAt": 1776727055208,
       "updatedAt": 1790161633777
@@ -1676,10 +1666,12 @@
       "favorite": false,
       "category": "",
       "watchedAt": null,
-      "clicks": [],
+      "clicks": [
+        1793378587226
+      ],
       "progressUpdatedAt": 1789388663275,
       "createdAt": 1776727055208,
-      "updatedAt": 1789564784664
+      "updatedAt": 1793378599138
     },
     {
       "id": "love-beyond-dreams-2026",
@@ -1727,7 +1719,9 @@
       "category": "",
       "watchedAt": null,
       "clicks": [
-        1792064283392
+        1792064283392,
+        1793378547033,
+        1793378547953
       ],
       "progressUpdatedAt": null,
       "createdAt": 1776727055208,
@@ -2025,17 +2019,19 @@
       "temp": 1,
       "ep": 1,
       "totalEp": null,
-      "dataEstreia": null,
+      "dataEstreia": "2026-11-07",
       "nota": "",
       "rating": null,
       "stars": 0,
       "favorite": false,
       "category": "",
       "watchedAt": null,
-      "clicks": [],
+      "clicks": [
+        1793378507385
+      ],
       "progressUpdatedAt": null,
       "createdAt": 1776727055208,
-      "updatedAt": 1789134946699
+      "updatedAt": 1793378528554
     },
     {
       "id": "petrichor-the-series-2024",
